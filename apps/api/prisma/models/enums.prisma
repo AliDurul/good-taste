@@ -1,0 +1,84 @@
+enum Role {
+    customer
+    agent
+    admin
+}
+
+enum OrderStatus {
+    pending
+    confirmed
+    out_for_delivery
+    delivered
+    cancelled
+}
+
+enum OrderPlacedBy {
+    customer
+    agent
+}
+
+enum PointsTransactionType {
+    earned
+    redeemed
+    expired
+    bonus_referral
+    bonus_promotion
+    manual_adjustment
+}
+
+enum TierName {
+    Bronze
+    Silver
+    Gold
+}
+
+enum TierChangeReason {
+    upgrade
+    downgrade
+    initial
+}
+
+enum PromotionType {
+    double_points
+    percentage_discount
+    fixed_discount
+    free_delivery
+    bundle
+}
+
+enum ReferralStatus {
+    pending
+    completed
+}
+
+enum NotificationType {
+    order_update
+    points_earned
+    points_expiry
+    promotion
+    flash_sale
+    birthday
+    tier_upgrade
+    tier_downgrade
+    referral_success
+    low_stock_alert
+    general
+}
+
+enum CampaignStatus {
+    draft
+    scheduled
+    sent
+    failed
+}
+
+enum OtpPurpose {
+    password_reset
+    phone_verify
+}
+
+enum SenderRole {
+    customer
+    agent
+    admin
+}

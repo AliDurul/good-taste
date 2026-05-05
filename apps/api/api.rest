@@ -5,6 +5,11 @@ GET {{baseurl}}
 
 ###
 
+# @name sessionsme
+GET {{baseurl}}/auth/sessions
+
+###
+
 # @name userlist
 GET {{baseurl}}/users
 
