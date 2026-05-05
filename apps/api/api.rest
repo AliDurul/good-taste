@@ -1,0 +1,22 @@
+@baseurl = http://localhost:8000/api/v1
+
+# @name home
+GET {{baseurl}}
+
+###
+
+# @name userlist
+GET {{baseurl}}/users
+
+###
+
+# @name usercreate
+POST {{baseurl}}/users
+Content-Type: application/json
+
+{
+    "name": "John Doe",
+    "email": "john.doe@example.com",
+    "age": 30,
+    "password": "password123"
+}

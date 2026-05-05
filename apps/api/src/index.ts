@@ -1,27 +1,14 @@
-import express from 'express';
-import cors from 'cors';
-import { fn } from './helper';
+import "dotenv/config";
+import app from "./server";
+import apiRoute from "./routes";
+import { errorHandler, notFound } from "./middlewares/common";
 
-const app = express();
-const PORT = process.env.PORT || 3001;
 
-app.use(cors());
-app.use(express.json());
+// API routes
+app.use("/api/v1", apiRoute);
 
-fn()
 
-app.get('/', (req, res) => {
-  res.json({ message: 'API is running successfully!' });
-});
+app.use(notFound).use(errorHandler);
 
-app.get('/users', (req, res) => {
-  const users = [
-    { id: '1', name: 'John Doe' },
-    { id: '2', name: 'Jane Smith' }
-  ];
-  res.json(users);
-});
-
-app.listen(PORT, () => {
-  console.log(`🚀 API server running on http://localhost:${PORT}`);
-});
+const PORT = process.env.PORT || 8001;
+app.listen(PORT, () => console.log(`API server running on http://localhost:${PORT}`));

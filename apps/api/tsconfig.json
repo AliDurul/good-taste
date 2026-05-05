@@ -3,7 +3,8 @@
   "compilerOptions": {
     "lib": ["ES2015"],
     "outDir": "./dist",
-    "strictNullChecks": true
+    "strictNullChecks": true,
+    "ignoreDeprecations": "6.0"
   },
   "exclude": ["node_modules"],
   "include": ["."]
