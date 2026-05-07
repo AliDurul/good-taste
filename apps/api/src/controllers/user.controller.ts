@@ -1,37 +1,64 @@
+import type { Request, Response } from "express";
 import { RequestHandler } from "express";
 import { prisma } from "../lib/prisma";
 import { CustomError } from "../lib/common";
+import { auth } from "../lib/auth";
+import { APIError } from "better-auth/api"; // Import this
 
+const getHeaders = (req: Request) => new Headers(req.headers as Record<string, string>);
 
-export const listUsers: RequestHandler = async (req, res) => {
-    const users = await prisma.user.findMany({
-        include: { posts: true },
+// Helper to handle Better Auth errors
+const handleAuthError = (error: unknown, next: Function) => {
+    if (error instanceof APIError) {
+        // Pass to Express error handler
+        return next(new CustomError(error.message || 'Authentication error', error.statusCode || 500, true));
+    }
+    next(error);
+};
+
+export const listUsers = async (req: Request, res: Response) => {
+
+    const query = req.query as Record<string, string | undefined>;
+
+    const users = await auth.api.listUsers({
+        query: {
+            limit: query.limit ? parseInt(query.limit) : 50,
+            offset: query.offset ? parseInt(query.offset) : undefined,
+            searchValue: query.searchValue,
+            searchField: query.searchField as "email" | "name" | undefined,
+            searchOperator: query.searchOperator as "contains" | "starts_with" | "ends_with" | undefined,
+            filterField: query.filterField,
+            filterValue: query.filterValue,
+            sortBy: query.sortBy,
+            sortDirection: query.sortDirection as "asc" | "desc" | undefined,
+        },
+        headers: getHeaders(req),
     });
-
     res.status(200).send({ success: true, data: users });
 };
 
 export const createUser: RequestHandler = async (req, res) => {
-    const { email, name } = req.validatedBody;
+    const { email, password, name, role, ...data } = req.validatedBody;
 
-    const existingUser = await prisma.user.findUnique({ where: { email } });
-    if (existingUser) {
-        throw new CustomError('User already exists', 400, true);
-    }
-
-    const user = await prisma.user.create({
-        data: { email, name },
+    const user = await auth.api.createUser({
+        body: {
+            email,
+            password,
+            name,
+            role, // optional: "user", "admin", etc.
+            data, // optional: additional user fields
+        },
     });
 
     res.status(201).send({ success: true, data: user });
 };
 
 export const getUser: RequestHandler = async (req, res) => {
-    const { id } = req.params;
+    const { id } = req.params as { id: string };
 
-    const user = await prisma.user.findUnique({
-        where: { id: parseInt(id!, 10) },
-        include: { posts: true },
+    const user = await auth.api.getUser({
+        query: { id },
+        headers: getHeaders(req),
     });
 
     if (!user) {
@@ -43,16 +70,14 @@ export const getUser: RequestHandler = async (req, res) => {
 
 export const updateUser: RequestHandler = async (req, res) => {
     const { id } = req.params;
-    const { email, name } = req.validatedBody;
 
-    const user = await prisma.user.findUnique({ where: { id: parseInt(id!, 10) } });
-    if (!user) {
-        throw new CustomError('User not found', 404, true);
-    }
-
-    const updated = await prisma.user.update({
-        where: { id: parseInt(id!, 10) },
-        data: { email, name },
+    const updateData = req.validatedBody;
+    const updated = await auth.api.adminUpdateUser({
+        body: {
+            userId: id,
+            data: updateData,
+        },
+        headers: getHeaders(req),
     });
 
     res.status(200).send({ success: true, data: updated });
@@ -61,12 +86,60 @@ export const updateUser: RequestHandler = async (req, res) => {
 export const deleteUser: RequestHandler = async (req, res) => {
     const { id } = req.params;
 
-    const user = await prisma.user.findUnique({ where: { id: parseInt(id!, 10) } });
+    await auth.api.removeUser({
+        body: {
+            userId: id,
+        },
+        headers: getHeaders(req),
+    });
+
+    res.status(200).send({ success: true, message: 'User deleted successfully' });
+};
+
+export const banUser: RequestHandler = async (req, res) => {
+    const { id } = req.params as { id: string };
+    const { banReason, banExpiresIn } = req.validatedBody;
+
+    const user = await prisma.user.findUnique({ where: { id: id! } });
     if (!user) {
         throw new CustomError('User not found', 404, true);
     }
 
-    await prisma.user.delete({ where: { id: parseInt(id!, 10) } });
+    await auth.api.banUser({
+        body: {
+            userId: id,
+            banReason,
+            banExpiresIn, // in seconds, e.g., 60 * 60 * 24 for 1 day
+        },
+        headers: getHeaders(req),
+    });
+    res.status(200).send({ success: true, message: 'User banned successfully' });
+};
 
-    res.status(200).send({ success: true, message: 'User deleted successfully' });
+export const unbanUser: RequestHandler = async (req, res) => {
+    const { id } = req.params;
+
+    await auth.api.unbanUser({
+        body: {
+            userId: id,
+        },
+        headers: getHeaders(req),
+    });
+
+    res.status(200).send({ success: true, message: 'User unbanned successfully' });
+};
+
+export const setUserRole: RequestHandler = async (req, res) => {
+    const { id } = req.params as { id: string };
+    const { role } = req.validatedBody;
+
+    await auth.api.setRole({
+        body: {
+            userId: id,
+            role, // string or string[]
+        },
+        headers: getHeaders(req),
+    });
+
+    res.status(200).send({ success: true, message: 'User role updated successfully' });
 };

@@ -12,4 +12,15 @@ router.route('/:id')
     .put(validate(userUpdateSchema), createUser)
     .delete(deleteUser);
 
+// Customer routes
+// app.post("/api/orders",
+// 	authMiddleware,
+// 	requireRole(["customer", "agent", "admin", "stock_manager"]),
+// 	async (req, res) => {
+// 		// Customers can create orders
+// 	}
+// )
+
+
+
 export default router;

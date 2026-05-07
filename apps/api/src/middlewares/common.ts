@@ -1,6 +1,7 @@
 import { NextFunction, RequestHandler, Response, Request } from "express";
 import { CustomError } from "../lib/common";
 import { z } from 'zod';
+import { APIError } from "better-auth/api";
 
 // 404 NOT FOUND MIDDLEWARE
 export const notFound: RequestHandler = (req, res, next) => {
@@ -9,28 +10,38 @@ export const notFound: RequestHandler = (req, res, next) => {
 };
 
 // ERROR HANDLER MIDDLEWARE
-export async function errorHandler(err: CustomError, req: Request, res: Response, next: NextFunction): Promise<void> {
-    let error: any = { ...err };
-    error.message = err.message || "Something went wrong";
-    error.statusCode = err.statusCode || 500;
-    error.cause = err.cause || null;
-    error.isOperational = err.isOperational || false;
-    error.stack = err.stack || null;
+export async function errorHandler(err: unknown, req: Request, res: Response, next: NextFunction): Promise<void> {
+    let statusCode = 500;
+    let message = "Something went wrong";
+    let isOperational = false;
+    let stack: string | undefined;
+    let cause: unknown = null;
 
-    // isTrusted error
-    if (!(err instanceof CustomError && error.isOperational)) {
-        console.log('untrusted error: ', error);
-        // await sendMail({ to: 'alidrl26@gmail.com', subject: 'Error Occurred', tempFn: errorEmailTemp, data: error });
-        // process.exit(1);
+    if (err instanceof CustomError) {
+        statusCode = err.statusCode;
+        message = err.message;
+        isOperational = err.isOperational;
+        stack = err.stack;
+        cause = err.cause ?? null;
+    } else if (err instanceof APIError) {
+        statusCode = err.statusCode;
+        message = err.message || "Authentication error";
+        isOperational = true;
+        stack = err.stack;
+    } else if (err instanceof Error) {
+        message = err.message;
+        stack = err.stack;
     }
 
-    // console.log('Error Handler: ', error);
+    if (!isOperational) {
+        console.error("Unhandled error:", err);
+    }
 
-    res.status(error.statusCode).send({
+    res.status(statusCode).json({
         success: false,
-        message: error.message,
-        stack: process.env.NODE_ENV === "production" ? null : error.stack,
-        cause: error.cause || null,
+        message,
+        stack: process.env.NODE_ENV === "production" ? null : stack,
+        cause,
     });
 }
 

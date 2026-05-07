@@ -1,11 +1,18 @@
 {
   "extends": "@workspace/typescript-config/base.json",
   "compilerOptions": {
-    "lib": ["ES2015"],
+    "lib": [
+      "ES2015"
+    ],
     "outDir": "./dist",
     "strictNullChecks": true,
-    "ignoreDeprecations": "6.0"
+    "declaration": false,
+    "declarationMap": false
   },
-  "exclude": ["node_modules"],
-  "include": ["."]
+  "exclude": [
+    "node_modules"
+  ],
+  "include": [
+    "."
+  ]
 }

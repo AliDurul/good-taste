@@ -12,25 +12,172 @@ datasource db {
   provider = "postgresql"
 }
 
-model User {
-  id            String    @id
-  name          String
-  email         String
-  emailVerified Boolean   @default(false)
-  image         String?
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-  sessions      Session[]
-  accounts      Account[]
+// =============================================================================
+// ENUMS
+// =============================================================================
 
-  @@unique([email])
+enum OrderStatus {
+  pending
+  confirmed
+  out_for_delivery
+  delivered
+  cancelled
+}
+
+enum OrderPlacedBy {
+  customer
+  agent
+}
+
+enum PointsTransactionType {
+  earned
+  redeemed
+  expired
+  bonus_referral
+  bonus_promotion
+  manual_adjustment
+}
+
+enum TierName {
+  Bronze
+  Silver
+  Gold
+}
+
+enum TierChangeReason {
+  upgrade
+  downgrade
+  initial
+}
+
+enum PromotionType {
+  double_points
+  percentage_discount
+  fixed_discount
+  free_delivery
+  bundle
+}
+
+enum ReferralStatus {
+  pending
+  completed
+}
+
+enum NotificationType {
+  order_update
+  points_earned
+  points_expiry
+  promotion
+  flash_sale
+  birthday
+  tier_upgrade
+  tier_downgrade
+  referral_success
+  low_stock_alert
+  general
+}
+
+enum CampaignStatus {
+  draft
+  scheduled
+  sent
+  failed
+}
+
+enum OtpPurpose {
+  phone_verify
+  password_reset_phone
+}
+
+enum SenderRole {
+  customer
+  agent
+  admin
+}
+
+// =============================================================================
+// BETTER AUTH — DO NOT MODIFY THESE MODELS
+// Managed entirely by Better Auth. Changes here will break authentication.
+// =============================================================================
+
+model User {
+  id            String   @id // Better Auth manages ID generation
+  name          String
+  email         String   @unique
+  emailVerified Boolean  @default(false)
+  image         String? // avatar — Cloudflare URL
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // Better Auth session & account relations
+  sessions Session[]
+  accounts Account[]
+
+  // Better Auth admin plugin fields
+  // role values: "customer" | "agent" | "admin"
+  role       String?
+  banned     Boolean?  @default(false)
+  banReason  String?
+  banExpires DateTime?
+
+  // ── Good Taste Ltd — extended user fields ─────────────
+  phone    String?
+  birthday DateTime? // for birthday push notifications
+  fcmToken String? // latest FCM device token
+
+  // Location (entered at registration by customer or agent)
+  address String?
+  city    String?
+  country String?
+  lat     Float?
+  lng     Float?
+
+  // Customer loyalty fields
+  referralCode  String? @unique // generated on customer registration
+  pointsBalance Int     @default(0)
+  totalSpend    Float   @default(0) // cumulative spend, drives tier logic
+
+  // Customer → assigned agent
+  assignedAgentId String?
+  assignedAgent   User?   @relation("AgentCustomers", fields: [assignedAgentId], references: [id])
+  customers       User[]  @relation("AgentCustomers")
+
+  // Referral chain
+  referredById  String?
+  referredBy    User?   @relation("UserReferrals", fields: [referredById], references: [id])
+  referredUsers User[]  @relation("UserReferrals")
+
+  // Loyalty tier
+  tierId String?
+  tier   LoyaltyTier? @relation(fields: [tierId], references: [id])
+
+  // ── Good Taste Ltd relations ──────────────────────────
+  otps                    OTP[]
+  ordersAsCustomer        Order[]             @relation("CustomerOrders")
+  ordersAsAgent           Order[]             @relation("AgentOrders")
+  pointsTransactions      PointsTransaction[]
+  tierHistories           TierHistory[]
+  redemptionLogs          RedemptionLog[]
+  referralsSent           Referral[]          @relation("ReferrerReferrals")
+  referralReceived        Referral?           @relation("ReferredReferral")
+  notifications           Notification[]
+  campaignsCreated        Campaign[]
+  conversationsAsCustomer Conversation[]      @relation("CustomerConversations")
+  conversationsAsAgent    Conversation[]      @relation("AgentConversations")
+  messagesSent            Message[]
+  qrCodesAsAgent          QRCode[]            @relation("AgentQRCodes")
+  qrCodesAsCustomer       QRCode[]            @relation("CustomerQRCodes")
+
+  @@index([role])
+  @@index([assignedAgentId])
+  @@index([tierId])
   @@map("user")
 }
 
 model Session {
   id        String   @id
   expiresAt DateTime
-  token     String
+  token     String   @unique
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   ipAddress String?
@@ -38,7 +185,8 @@ model Session {
   userId    String
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@unique([token])
+  impersonatedBy String?
+
   @@index([userId])
   @@map("session")
 }
@@ -55,7 +203,7 @@ model Account {
   accessTokenExpiresAt  DateTime?
   refreshTokenExpiresAt DateTime?
   scope                 String?
-  password              String?
+  password              String? // hashed — managed by Better Auth
   createdAt             DateTime  @default(now())
   updatedAt             DateTime  @updatedAt
 
@@ -73,4 +221,474 @@ model Verification {
 
   @@index([identifier])
   @@map("verification")
+}
+
+// =============================================================================
+// CUSTOM AUTH — PHONE OTP
+// Better Auth handles email verification via the Verification model above.
+// This OTP model covers SMS-based phone verification and phone password reset.
+// =============================================================================
+
+model OTP {
+  id        String     @id @default(uuid())
+  userId    String
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  code      String // 6-digit code
+  purpose   OtpPurpose
+  isUsed    Boolean    @default(false)
+  isExpired Boolean    @default(false) // set by cron when expiresAt is past
+  expiresAt DateTime // 10 minutes from creation
+  createdAt DateTime   @default(now())
+
+  @@index([userId, purpose])
+}
+
+// =============================================================================
+// CATALOGUE & STOCK
+// =============================================================================
+
+model Category {
+  id          String              @id @default(uuid())
+  name        String              @unique
+  description String?
+  image       String? // Cloudflare URL
+  isActive    Boolean             @default(true)
+  products    Product[]
+  promotions  PromotionCategory[]
+  createdAt   DateTime            @default(now())
+  updatedAt   DateTime            @updatedAt
+}
+
+model Product {
+  id          String   @id @default(uuid())
+  name        String
+  description String?
+  price       Float
+  images      String[] // Cloudflare URLs
+  isActive    Boolean  @default(true)
+  pointsValue Int      @default(1) // base points earned per unit ordered
+
+  // Stock management
+  stockQty          Int       @default(0)
+  lowStockThreshold Int       @default(10)
+  isOutOfStock      Boolean   @default(false) // updated on every stock change
+  lastRestockedAt   DateTime?
+
+  categoryId String
+  category   Category @relation(fields: [categoryId], references: [id])
+
+  orderItems  OrderItem[]
+  bundleItems PromotionBundleItem[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([categoryId])
+  @@index([isActive])
+  @@index([isOutOfStock])
+}
+
+// =============================================================================
+// ORDERS & DELIVERY
+// =============================================================================
+
+model Order {
+  id String @id @default(uuid())
+
+  customerId String
+  customer   User   @relation("CustomerOrders", fields: [customerId], references: [id])
+
+  agentId String
+  agent   User   @relation("AgentOrders", fields: [agentId], references: [id])
+
+  status   OrderStatus   @default(pending)
+  placedBy OrderPlacedBy
+
+  totalAmount    Float
+  discountAmount Float   @default(0)
+  finalAmount    Float
+  isFreeDelivery Boolean @default(false)
+
+  pointsEarned   Int @default(0)
+  pointsRedeemed Int @default(0)
+
+  deliveryAddress String?
+  notes           String?
+
+  cashConfirmedAt DateTime?
+  deliveredAt     DateTime?
+  cancelledAt     DateTime?
+  cancelReason    String?
+
+  items            OrderItem[]
+  appliedPromotion AppliedPromotion?
+  qrCode           QRCode?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([customerId])
+  @@index([agentId])
+  @@index([status])
+  @@index([createdAt(sort: Desc)])
+}
+
+model OrderItem {
+  id        String  @id @default(uuid())
+  orderId   String
+  order     Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId String
+  product   Product @relation(fields: [productId], references: [id])
+
+  // Snapshot at time of order — never changes retroactively
+  productName  String
+  productPrice Float
+  quantity     Int
+  subtotal     Float
+
+  @@index([orderId])
+}
+
+model AppliedPromotion {
+  id          String     @id @default(uuid())
+  orderId     String     @unique
+  order       Order      @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  promotionId String?
+  promotion   Promotion? @relation(fields: [promotionId], references: [id])
+
+  // Snapshot at time of order
+  promotionName    String
+  type             PromotionType
+  discountAmount   Float         @default(0)
+  pointsMultiplier Float         @default(1)
+}
+
+model QRCode {
+  id      String @id @default(uuid())
+  orderId String @unique
+  order   Order  @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  customerId String
+  customer   User   @relation("CustomerQRCodes", fields: [customerId], references: [id])
+
+  agentId String
+  agent   User   @relation("AgentQRCodes", fields: [agentId], references: [id])
+
+  code      String    @unique // UUID or signed token
+  expiresAt DateTime
+  isExpired Boolean   @default(false) // set by cron when expiresAt is past
+  isUsed    Boolean   @default(false)
+  usedAt    DateTime?
+
+  pointsToCredit Int // pre-calculated on generation
+
+  createdAt DateTime @default(now())
+
+  @@index([code])
+  @@index([expiresAt])
+}
+
+// =============================================================================
+// LOYALTY — POINTS, TIERS, REWARDS
+// =============================================================================
+
+model PointsTransaction {
+  id          String                @id @default(uuid())
+  customerId  String
+  customer    User                  @relation(fields: [customerId], references: [id])
+  type        PointsTransactionType
+  amount      Int // positive = credit, negative = debit
+  balance     Int // customer balance AFTER this transaction
+  description String?
+  orderId     String? // linked order if applicable
+  expiresAt   DateTime? // set for 'earned' transactions
+  isExpired   Boolean               @default(false) // set by cron when expiresAt is past
+  createdAt   DateTime              @default(now())
+
+  @@index([customerId, createdAt(sort: Desc)])
+  @@index([isExpired, expiresAt])
+}
+
+// Singleton — always one row with key = 'global'
+model PointsConfig {
+  id                    String   @id @default(uuid())
+  key                   String   @unique @default("global")
+  pointsPerCurrencyUnit Float    @default(1)
+  expiryMonths          Int      @default(12)
+  referralBonusReferrer Int      @default(50)
+  referralBonusReferred Int      @default(25)
+  updatedAt             DateTime @updatedAt
+}
+
+model LoyaltyTier {
+  id               String   @id @default(uuid())
+  name             TierName @unique
+  minPoints        Int
+  maxPoints        Int? // null for Gold (no ceiling)
+  pointsMultiplier Float    @default(1.0)
+  color            String? // hex color for UI badge
+
+  benefits          TierBenefit[]
+  users             User[]
+  fromTierHistories TierHistory[]   @relation("FromTier")
+  toTierHistories   TierHistory[]   @relation("ToTier")
+  promotionTiers    PromotionTier[]
+  campaignTiers     CampaignTier[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model TierBenefit {
+  id          String      @id @default(uuid())
+  tierId      String
+  tier        LoyaltyTier @relation(fields: [tierId], references: [id], onDelete: Cascade)
+  description String
+
+  @@index([tierId])
+}
+
+model TierHistory {
+  id         String           @id @default(uuid())
+  customerId String
+  customer   User             @relation(fields: [customerId], references: [id])
+  fromTierId String?
+  fromTier   LoyaltyTier?     @relation("FromTier", fields: [fromTierId], references: [id])
+  toTierId   String
+  toTier     LoyaltyTier      @relation("ToTier", fields: [toTierId], references: [id])
+  reason     TierChangeReason
+  changedAt  DateTime         @default(now())
+
+  @@index([customerId, changedAt(sort: Desc)])
+}
+
+model Reward {
+  id          String  @id @default(uuid())
+  name        String
+  description String?
+  pointsCost  Int
+  image       String? // Cloudflare URL
+  isActive    Boolean @default(true)
+  stock       Int? // null = unlimited
+
+  redemptionLogs RedemptionLog[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model RedemptionLog {
+  id          String   @id @default(uuid())
+  customerId  String
+  customer    User     @relation(fields: [customerId], references: [id])
+  rewardId    String
+  reward      Reward   @relation(fields: [rewardId], references: [id])
+  rewardName  String // snapshot
+  pointsSpent Int
+  redeemedAt  DateTime @default(now())
+
+  @@index([customerId, redeemedAt(sort: Desc)])
+}
+
+// =============================================================================
+// REFERRALS
+// =============================================================================
+
+model Referral {
+  id String @id @default(uuid())
+
+  referrerId String
+  referrer   User   @relation("ReferrerReferrals", fields: [referrerId], references: [id])
+
+  referredId String @unique // one person can only be referred once
+  referred   User   @relation("ReferredReferral", fields: [referredId], references: [id])
+
+  status ReferralStatus @default(pending)
+
+  firstOrderId   String? // set when status → completed
+  completedAt    DateTime?
+  referrerPoints Int? // points awarded to referrer
+  referredPoints Int? // points awarded to referred
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([referrerId])
+  @@index([status])
+}
+
+// =============================================================================
+// PROMOTIONS
+// =============================================================================
+
+model Promotion {
+  id               String        @id @default(uuid())
+  name             String
+  description      String?
+  type             PromotionType
+  value            Float?
+  pointsMultiplier Float         @default(1)
+
+  startsAt   DateTime
+  endsAt     DateTime
+  isActive   Boolean  @default(false) // toggled by scheduler at startsAt / endsAt
+  usageLimit Int? // null = unlimited
+  usageCount Int      @default(0)
+
+  createdById String? // admin user id
+
+  targetTiers      PromotionTier[]
+  targetCategories PromotionCategory[]
+  bundleItems      PromotionBundleItem[]
+  appliedOrders    AppliedPromotion[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([isActive])
+  @@index([startsAt, endsAt])
+}
+
+// Join table: Promotion ↔ LoyaltyTier (empty = applies to all tiers)
+model PromotionTier {
+  promotionId String
+  promotion   Promotion   @relation(fields: [promotionId], references: [id], onDelete: Cascade)
+  tierId      String
+  tier        LoyaltyTier @relation(fields: [tierId], references: [id], onDelete: Cascade)
+
+  @@id([promotionId, tierId])
+}
+
+// Join table: Promotion ↔ Category (empty = applies to all categories)
+model PromotionCategory {
+  promotionId String
+  promotion   Promotion @relation(fields: [promotionId], references: [id], onDelete: Cascade)
+  categoryId  String
+  category    Category  @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  @@id([promotionId, categoryId])
+}
+
+model PromotionBundleItem {
+  id          String    @id @default(uuid())
+  promotionId String
+  promotion   Promotion @relation(fields: [promotionId], references: [id], onDelete: Cascade)
+  productId   String
+  product     Product   @relation(fields: [productId], references: [id])
+  quantity    Int
+
+  @@index([promotionId])
+}
+
+// =============================================================================
+// NOTIFICATIONS
+// =============================================================================
+
+model Notification {
+  id     String           @id @default(uuid())
+  userId String
+  user   User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title  String
+  body   String
+  type   NotificationType
+
+  // Deep-link payload passed to mobile app on notification tap
+  data Json?
+
+  isRead Boolean   @default(false)
+  readAt DateTime?
+
+  createdAt DateTime @default(now())
+
+  @@index([userId, createdAt(sort: Desc)])
+  @@index([userId, isRead])
+}
+
+model Campaign {
+  id    String           @id @default(uuid())
+  title String
+  body  String
+  type  NotificationType @default(general)
+
+  // Targeting — empty = broadcast to all
+  targetTiers CampaignTier[]
+  targetRoles String[] // "customer" | "agent"
+
+  scheduledAt    DateTime?
+  sentAt         DateTime?
+  status         CampaignStatus @default(draft)
+  recipientCount Int            @default(0)
+
+  createdById String?
+  createdBy   User?   @relation(fields: [createdById], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([status, scheduledAt])
+}
+
+// Join table: Campaign ↔ LoyaltyTier
+model CampaignTier {
+  campaignId String
+  campaign   Campaign    @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  tierId     String
+  tier       LoyaltyTier @relation(fields: [tierId], references: [id], onDelete: Cascade)
+
+  @@id([campaignId, tierId])
+}
+
+// =============================================================================
+// CHAT (WebSocket-ready)
+// =============================================================================
+
+model Conversation {
+  id String @id @default(uuid())
+
+  customerId String
+  customer   User   @relation("CustomerConversations", fields: [customerId], references: [id])
+
+  agentId String
+  agent   User   @relation("AgentConversations", fields: [agentId], references: [id])
+
+  lastMessage     String?
+  lastMessageAt   DateTime?
+  lastMessageById String?
+
+  // Separate unread counts per side — decremented on WebSocket read event
+  unreadByCustomer Int @default(0)
+  unreadByAgent    Int @default(0)
+
+  isActive Boolean   @default(true)
+  messages Message[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([customerId, agentId]) // one conversation per customer-agent pair
+  @@index([customerId, lastMessageAt(sort: Desc)])
+  @@index([agentId, lastMessageAt(sort: Desc)])
+}
+
+model Message {
+  id             String       @id @default(uuid())
+  conversationId String
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  senderId   String
+  sender     User       @relation(fields: [senderId], references: [id])
+  senderRole SenderRole
+
+  body String
+
+  isRead Boolean   @default(false)
+  readAt DateTime?
+
+  // Optional: attach an order to a message
+  attachedOrderId String?
+
+  createdAt DateTime @default(now())
+
+  // Ascending index — messages always fetched oldest → newest for chat history
+  @@index([conversationId, createdAt(sort: Asc)])
 }
