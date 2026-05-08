@@ -1,10 +1,8 @@
 import type { Request, Response } from "express";
 import { RequestHandler } from "express";
-import { prisma } from "../lib/prisma";
-import { CustomError, getHeaders } from "../lib/common";
+import { CustomError } from "../lib/common";
 import { auth } from "../lib/auth";
-import { APIError } from "better-auth/api"; // Import this
-
+import { fromNodeHeaders } from "better-auth/node";
 
 
 export const listUsers = async (req: Request, res: Response) => {
@@ -23,7 +21,7 @@ export const listUsers = async (req: Request, res: Response) => {
             sortBy: query.sortBy,
             sortDirection: query.sortDirection as "asc" | "desc" | undefined,
         },
-        headers: getHeaders(req),
+        headers: fromNodeHeaders(req.headers),
     });
     res.status(200).send({ success: true, data: users });
 };
@@ -39,6 +37,7 @@ export const createUser: RequestHandler = async (req, res) => {
             role, // optional: "user", "admin", etc.
             data, // optional: additional user fields
         },
+        headers: fromNodeHeaders(req.headers),
     });
 
     res.status(201).send({ success: true, data: user });
@@ -49,7 +48,7 @@ export const getUser: RequestHandler = async (req, res) => {
 
     const user = await auth.api.getUser({
         query: { id },
-        headers: getHeaders(req),
+        headers: fromNodeHeaders(req.headers),
     });
 
     if (!user) {
@@ -68,7 +67,7 @@ export const updateUser: RequestHandler = async (req, res) => {
             userId: id,
             data: updateData,
         },
-        headers: getHeaders(req),
+        headers: fromNodeHeaders(req.headers),
     });
 
     res.status(200).send({ success: true, data: updated });
@@ -81,7 +80,7 @@ export const deleteUser: RequestHandler = async (req, res) => {
         body: {
             userId: id,
         },
-        headers: getHeaders(req),
+        headers: fromNodeHeaders(req.headers),
     });
 
     res.status(200).send({ success: true, message: 'User deleted successfully' });
@@ -91,18 +90,13 @@ export const banUser: RequestHandler = async (req, res) => {
     const { id } = req.params as { id: string };
     const { banReason, banExpiresIn } = req.validatedBody;
 
-    const user = await prisma.user.findUnique({ where: { id: id! } });
-    if (!user) {
-        throw new CustomError('User not found', 404, true);
-    }
-
     await auth.api.banUser({
         body: {
             userId: id,
             banReason,
             banExpiresIn, // in seconds, e.g., 60 * 60 * 24 for 1 day
         },
-        headers: getHeaders(req),
+        headers: fromNodeHeaders(req.headers),
     });
     res.status(200).send({ success: true, message: 'User banned successfully' });
 };
@@ -114,7 +108,7 @@ export const unbanUser: RequestHandler = async (req, res) => {
         body: {
             userId: id,
         },
-        headers: getHeaders(req),
+        headers: fromNodeHeaders(req.headers),
     });
 
     res.status(200).send({ success: true, message: 'User unbanned successfully' });
@@ -129,7 +123,7 @@ export const setUserRole: RequestHandler = async (req, res) => {
             userId: id,
             role, // string or string[]
         },
-        headers: getHeaders(req),
+        headers: fromNodeHeaders(req.headers),
     });
 
     res.status(200).send({ success: true, message: 'User role updated successfully' });

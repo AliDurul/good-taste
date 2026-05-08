@@ -1,6 +1,5 @@
 @baseurl = http://localhost:8000/api/v1
-@token = 330kMPLTQetrveSZ8jyeVeNUt8UgdVW9.m8PCJihfK6yS3S6a61wCSZ/0SDs3woX51FcXnwidWaY=
-
+@token = {{signin.response.body.authToken}}
 
 # @name currentSession
 GET {{baseurl}}/sessions/me
@@ -28,6 +27,12 @@ Content-Type: application/json
   "email": "admin@gmail.com",
   "password": "password123"
 }
+### 
+
+# @name signout
+POST {{baseurl}}/sign-out
+Authorization: Bearer {{token}}
+
 
 ###
 
@@ -46,4 +51,48 @@ Content-Type: application/json
     "email": "john.doe@example.com",
     "age": 30,
     "password": "password123"
+}
+
+###
+
+# @name categorylist
+GET {{baseurl}}/categories
+Authorization: Bearer {{token}}
+
+###
+
+# @name categorycreate
+POST {{baseurl}}/categories
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+    "name": "category 8",
+    "description": "This is the 8th category",
+    "image": "https://example.com/images/category8.jpg"
+}
+
+###
+
+# @name productlist
+GET {{baseurl}}/products
+Authorization: Bearer {{token}}
+
+###
+
+# @name productcreate
+POST {{baseurl}}/products
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+    "name": "Product 2",
+    "description": "This is the 2nd product",
+    "price": 19.99,
+    "images": ["https://example.com/images/product2.jpg"],
+    "isActive": true,
+    "pointsValue": 5,
+    "stockQty": 20,
+    "lowStockThreshold": 10,
+    "categoryId": "3e49a970-a3e9-406a-9f66-a4a28b62ecff"
 }

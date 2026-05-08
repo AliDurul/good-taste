@@ -1,8 +1,4 @@
 import { pbkdf2Sync } from "node:crypto";
-import type { Request, Response } from "express";
-
-
-export const getHeaders = (req: Request) => new Headers(req.headers as Record<string, string>);
 
 // CUSTOM ERROR CLASS
 export class CustomError extends Error {

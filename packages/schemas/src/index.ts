@@ -1,3 +1,4 @@
-export * from "./common.js";
-export * from "./user.js";
-export * from "./auth.js";
+export * from "./common";
+export * from "./user";
+export * from "./auth";
+export * from "./stock";

@@ -1,0 +1,18 @@
+import { Router } from "express";
+
+const router: Router = Router();
+import { listCategories, getCategory, createCategory, updateCategory, deleteCategory } from "../controllers/category.controller";
+import { categoryCreateSchema, categoryUpdateSchema } from "@workspace/schemas";
+import { requireRole } from "../middlewares/auth.middleware";
+import { validate } from "../middlewares/common";
+
+router.route('/')
+    .get(listCategories)
+    .post(requireRole(['admin']), validate(categoryCreateSchema),createCategory);
+
+router.route('/:id')
+    .get(getCategory)
+    .put(requireRole(['admin']),validate(categoryUpdateSchema), updateCategory)
+    .delete(requireRole(['admin']), deleteCategory);
+
+export default router;

@@ -1,20 +1,28 @@
 import { RequestHandler } from "express";
 import { auth } from "../lib/auth";
-import { getHeaders } from "../lib/common";
 import { fromNodeHeaders } from "better-auth/node";
 
 export const signUp: RequestHandler = async (req, res) => {
     const { name, email, password } = req.validatedBody;
 
-    const { token, user } = await auth.api.signUpEmail({
+    const { headers } = await auth.api.signUpEmail({
         body: {
             name,
             email,
             password,
         },
+        headers: fromNodeHeaders(req.headers),
+        returnHeaders: true,
     });
 
-    res.status(200).send({ success: true, data: { token, user } });
+    // for development
+    const authToken = headers.get("set-auth-token");
+
+    // Forward cookies to the client
+    const cookies = headers.getSetCookie();
+    cookies.forEach(cookie => res.setHeader('Set-Cookie', cookie));
+
+    res.status(200).send({ success: true, authToken, message: 'Sign up successful' });
 };
 
 export const signIn: RequestHandler = async (req, res) => {
@@ -24,22 +32,29 @@ export const signIn: RequestHandler = async (req, res) => {
             email,
             password,
         },
-        headers: fromNodeHeaders(req.headers), // optional but recommended
-        returnHeaders: true, // ⬅️ Capture headers
+        headers: fromNodeHeaders(req.headers),
+        returnHeaders: true,
     });
 
+    // for development
     const authToken = headers.get("set-auth-token");
 
     // Forward cookies to the client
     const cookies = headers.getSetCookie();
     cookies.forEach(cookie => res.setHeader('Set-Cookie', cookie));
 
-    res.status(200).send({ success: true, authToken, message: 'sign in successful' });
+    res.status(200).send({ success: true, authToken, message: 'Sign in successful' });
 };
 
 export const signOut: RequestHandler = async (req, res) => {
-    await auth.api.signOut({
-        headers: getHeaders(req),
+    const { headers } = await auth.api.signOut({
+        headers: fromNodeHeaders(req.headers),
+        returnHeaders: true,
     });
-    res.status(200).send({ success: true });
+
+    // Forward cookies to the client
+    const cookies = headers.getSetCookie();
+    cookies.forEach(cookie => res.setHeader('Set-Cookie', cookie));
+
+    res.status(200).send({ success: true, message: 'Sign out successful' });
 };

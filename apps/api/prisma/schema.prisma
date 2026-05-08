@@ -248,15 +248,16 @@ model OTP {
 // =============================================================================
 
 model Category {
-  id          String              @id @default(uuid())
-  name        String              @unique
+  id          String   @id @default(uuid())
+  name        String   @unique
   description String?
   image       String? // Cloudflare URL
-  isActive    Boolean             @default(true)
-  products    Product[]
-  promotions  PromotionCategory[]
-  createdAt   DateTime            @default(now())
-  updatedAt   DateTime            @updatedAt
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  products   Product[] // one-to-many
+  promotions PromotionCategory[]
 }
 
 model Product {
@@ -277,11 +278,11 @@ model Product {
   categoryId String
   category   Category @relation(fields: [categoryId], references: [id])
 
-  orderItems  OrderItem[]
-  bundleItems PromotionBundleItem[]
-
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  orderItems  OrderItem[]
+  bundleItems PromotionBundleItem[]
 
   @@index([categoryId])
   @@index([isActive])
@@ -320,8 +321,8 @@ model Order {
   cancelledAt     DateTime?
   cancelReason    String?
 
-  items            OrderItem[]
-  appliedPromotion AppliedPromotion?
+  items            OrderItem[] // one-to-many
+  appliedPromotion AppliedPromotion? // one-to-one (for now, can be extended to many-to-many if needed)
   qrCode           QRCode?
 
   createdAt DateTime @default(now())
@@ -336,7 +337,7 @@ model Order {
 model OrderItem {
   id        String  @id @default(uuid())
   orderId   String
-  order     Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  order     Order   @relation(fields: [orderId], references: [id], onDelete: Cascade) // if order is deleted, delete items
   productId String
   product   Product @relation(fields: [productId], references: [id])
 

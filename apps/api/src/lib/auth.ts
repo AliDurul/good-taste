@@ -13,11 +13,10 @@ export const auth = betterAuth({
     emailAndPassword: {
         enabled: true,
         requireEmailVerification: false,
-        autoSignIn: false,
     },
     plugins: [
         expo(), 
-        bearer(), 
+        bearer(), // dev-only, remove in production
         admin({
             adminRoles: ["admin"],
             defaultRole: "customer",
