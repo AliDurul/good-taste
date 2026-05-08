@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { userCreateSchema, userUpdateSchema } from "../lib/schemas";
+import { userCreateSchema, userUpdateSchema } from "@workspace/schemas";
 import { validate } from "../middlewares/common";
 import { createUser, deleteUser, getUser, listUsers } from "../controllers/user.controller";
 

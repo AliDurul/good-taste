@@ -1,10 +1,11 @@
 import type { NextFunction, Response, Request } from "express";
 import { auth } from "../lib/auth";
 import { CustomError } from "../lib/common";
+import { fromNodeHeaders } from "better-auth/node";
 
-export async function authMiddleware(req: Request, res: Response, next: NextFunction) {
+export async function requireAuth(req: Request, res: Response, next: NextFunction) {
     const session = await auth.api.getSession({
-        headers: new Headers(req.headers as any),
+        headers: fromNodeHeaders(req.headers),
     });
     if (!session) {
         throw new CustomError("No active session", 401, true);
@@ -20,10 +21,10 @@ export async function authMiddleware(req: Request, res: Response, next: NextFunc
 export function requireRole(roles: string[]) {
     return (req: Request, res: Response, next: NextFunction) => {
         if (!req.user) {
-            return res.status(401).json({ error: "Unauthorized" });
+            throw new CustomError("Unauthorized", 401, true);
         }
         if (!roles.includes(req.user.role!)) {
-            return res.status(403).json({ error: "Insufficient permissions" });
+            throw new CustomError("Insufficient permissions", 403, true);
         }
         next();
     };

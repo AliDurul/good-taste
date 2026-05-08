@@ -1,19 +1,22 @@
+import { requireAuth, requireRole } from "../middlewares/auth.middleware";
 import { Router } from "express";
 import userRoutes from "./user.route";
-import sessionRoutes from './auth.session.route';
-import { authMiddleware } from "../middlewares/auth.middleware";
+import sessionRoutes from './session.route';
+import authRoutes from "./auth.route";
+
+
 
 const router: Router = Router();
 
-// home
-router.all('/', authMiddleware, (req, res) => {
-    res.json({ message: "Welcome to the API" });
-});
 
-// session
-router.use('/auth/sessions',authMiddleware, sessionRoutes);
+// auth
+router.use('/', authRoutes);
 
-// user
-router.use('/users', userRoutes);
+// sessions
+router.use('/sessions', requireAuth, sessionRoutes);
+
+
+// users
+router.use('/users', requireAuth, requireRole(['customer']), userRoutes);
 
 export default router;

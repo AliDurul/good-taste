@@ -1,7 +1,6 @@
 import { Router, RequestHandler } from "express";
 import { fromNodeHeaders } from "better-auth/node";
 import { auth } from "../lib/auth";
-import { CustomError } from "../lib/common";
 
 const router: Router = Router();
 

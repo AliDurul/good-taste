@@ -3,6 +3,8 @@ import { betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
 import { prisma } from "./prisma";
 import { admin, openAPI } from "better-auth/plugins";
+import { expo } from "@better-auth/expo"; 
+import { bearer } from "better-auth/plugins";
 
 export const auth = betterAuth({
     database: prismaAdapter(prisma, {
@@ -11,9 +13,11 @@ export const auth = betterAuth({
     emailAndPassword: {
         enabled: true,
         requireEmailVerification: false,
+        autoSignIn: false,
     },
     plugins: [
-        openAPI(), // Interactive API docs
+        expo(), 
+        bearer(), 
         admin({
             adminRoles: ["admin"],
             defaultRole: "customer",
@@ -52,7 +56,14 @@ export const auth = betterAuth({
             maxAge: 10 * 60,
         }
     },
-    trustedOrigins: process.env.TRUSTED_ORIGINS?.split(',').map(origin => origin.trim()) || [],
+    trustedOrigins: [
+        process.env.WEB_FRONTEND_URL!, // e.g., "https://myapp.com"
+        "myapp://", // ⬅️ Your mobile app deep link scheme
+        ...(process.env.NODE_ENV === "development" ? [
+            "exp://", // Expo dev client
+            "exp://**",
+        ] : []),
+    ],
     secret: process.env.BETTER_AUTH_SECRET!,
     baseURL: process.env.BASE_URL!,
     basePath: "/api/v1/auth",

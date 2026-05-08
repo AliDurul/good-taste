@@ -1,22 +1,39 @@
 @baseurl = http://localhost:8000/api/v1
+@token = 330kMPLTQetrveSZ8jyeVeNUt8UgdVW9.m8PCJihfK6yS3S6a61wCSZ/0SDs3woX51FcXnwidWaY=
 
-# @name reference
-GET {{baseurl}}/auth/reference
 
-###
-
-# @name home
-GET {{baseurl}}
+# @name currentSession
+GET {{baseurl}}/sessions/me
+Authorization: Bearer {{token}}
 
 ###
 
-# @name sessionsme
-GET {{baseurl}}/auth/sessions
+# @name signup
+POST {{baseurl}}/sign-up
+Content-Type: application/json
+
+{
+  "email": "admin@gmail.com",
+  "password": "password123",
+  "name": "Admin User"
+}
+
+### 
+
+# @name signin
+POST {{baseurl}}/sign-in
+Content-Type: application/json
+
+{
+  "email": "admin@gmail.com",
+  "password": "password123"
+}
 
 ###
 
 # @name userlist
 GET {{baseurl}}/users
+Authorization: Bearer {{token}}
 
 ###
 

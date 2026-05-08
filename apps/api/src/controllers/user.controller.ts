@@ -1,20 +1,11 @@
 import type { Request, Response } from "express";
 import { RequestHandler } from "express";
 import { prisma } from "../lib/prisma";
-import { CustomError } from "../lib/common";
+import { CustomError, getHeaders } from "../lib/common";
 import { auth } from "../lib/auth";
 import { APIError } from "better-auth/api"; // Import this
 
-const getHeaders = (req: Request) => new Headers(req.headers as Record<string, string>);
 
-// Helper to handle Better Auth errors
-const handleAuthError = (error: unknown, next: Function) => {
-    if (error instanceof APIError) {
-        // Pass to Express error handler
-        return next(new CustomError(error.message || 'Authentication error', error.statusCode || 500, true));
-    }
-    next(error);
-};
 
 export const listUsers = async (req: Request, res: Response) => {
 

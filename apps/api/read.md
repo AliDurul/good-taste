@@ -37,100 +37,6 @@ const makeAuthenticatedRequest = async () => {
 
 **Important**: The Expo integration docs specifically mention this pattern - you must use `authClient.getCookie()` to retrieve the session and manually set the `Cookie` header.
 
-## Improving Your Middleware
-
-Your middleware is mostly good, but there's one small improvement. The `auth.api.getSession()` already supports Bearer tokens automatically if the Bearer plugin is enabled. Here's an optimized version:
-
-```ts
-import type { NextFunction, Response, Request } from "express";
-import { auth } from "../lib/auth";
-
-export async function authMiddleware(req: Request, res: Response, next: NextFunction) {
-    try {
-        const session = await auth.api.getSession({
-            headers: new Headers(req.headers as any),
-        });
-        
-        if (!session) {
-            return res.status(401).json({ error: "Unauthorized" });
-        }
-        
-        if (session.user.banned) {
-            return res.status(403).json({ error: "Account banned" });
-        }
-        
-        req.user = session.user;
-        next();
-    } catch (e) {
-        return res.status(401).json({ error: "Invalid session" });
-    }
-}
-```
-
-Your `auth.api.getSession()` already handles:
-- ✅ Cookies from web apps
-- ✅ Bearer tokens (if you add the Bearer plugin)
-- ✅ Manually set Cookie headers from Expo
-
-## Alternative: Bearer Token Approach
-
-If you prefer a **unified approach** for both web and mobile, enable the Bearer plugin:
-
-```ts
-// auth.ts - Add Bearer plugin
-import { betterAuth } from "better-auth";
-import { bearer } from "better-auth/plugins";
-
-export const auth = betterAuth({
-    plugins: [bearer()],
-    // ... rest of config
-});
-```
-
-Then update your auth client to store and use the Bearer token:
-
-```ts
-// auth-client.ts (works for both web and mobile)
-export const authClient = createAuthClient({
-    baseURL: "http://localhost:8081",
-    fetchOptions: {
-        auth: {
-            type: "Bearer",
-            token: () => localStorage.getItem("bearer_token") || "" // Or SecureStore for mobile
-        },
-        onSuccess: (ctx) => {
-            // Store token on sign-in
-            const authToken = ctx.response.headers.get("set-auth-token");
-            if (authToken) {
-                localStorage.setItem("bearer_token", authToken);
-                // For mobile: SecureStore.setItemAsync("bearer_token", authToken);
-            }
-        }
-    }
-});
-```
-
-With Bearer tokens, your backend stays the same - `auth.api.getSession()` handles both cookies and Bearer tokens automatically.
-
-## Summary
-
-| Platform | Auth Method | Header |
-|----------|-------------|--------|
-| Web | Cookies (automatic) | `Cookie: session=...` |
-| Expo | SecureStore → Cookie header | `Cookie: better-auth.session=...` |
-| Either | Bearer token | `Authorization: Bearer ...` |
-
-Your current middleware **is suitable** - just ensure:
-1. **Web**: Use `credentials: 'include'` in fetch requests
-2. **Expo**: Use `authClient.getCookie()` and manually set the `Cookie` header
-3. **CORS**: Ensure your Express server allows credentials from your frontend origins
-
-If you want the simplest cross-platform experience, add the Bearer plugin and use tokens instead of juggling cookies.
-
-
-
-
-
 
 ----
 
@@ -165,7 +71,6 @@ You'll get a **Scalar OpenAPI interface** where you can:
 - ✅ Test endpoints directly in the browser
 - ✅ See all authenticated endpoints from your plugins
 
-<img src="/images/docs/open-api-reference.png" width="600" />
 
 ---
 
@@ -349,13 +254,3 @@ createAdmin();
 ```
 
 ---
-
-## Summary
-
-| Tool | Best For | Setup |
-|------|----------|-------|
-| **Open API Plugin** | Quick testing, exploring endpoints, seeing schemas | Add `openAPI()` plugin, visit `/api/auth/reference` |
-| **Postman** | Team collaboration, collections, environments | Import OpenAPI schema or create requests manually |
-| **VS Code REST Client** | Quick tests during development, version-controlled tests | Create `.http` files |
-
-The **Open API plugin** is the fastest way to start since it's interactive and shows all available endpoints automatically. Let me know if you need help setting up either option!
