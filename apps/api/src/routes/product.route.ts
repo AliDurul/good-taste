@@ -4,10 +4,10 @@ const router: Router = Router();
 import { listProducts, getProduct, createProduct, updateProduct, deleteProduct } from "../controllers/product.controller";
 import { productCreateSchema, productUpdateSchema } from "@workspace/schemas";
 import { requireRole } from "../middlewares/auth.middleware";
-import { validate } from "../middlewares/common";
+import { validate, parsePagination } from "../middlewares/common";
 
 router.route('/')
-    .get(listProducts)
+    .get(parsePagination(), listProducts)
     .post(requireRole(['admin']), validate(productCreateSchema),createProduct);
 
 router.route('/:id')

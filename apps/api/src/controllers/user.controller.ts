@@ -6,13 +6,13 @@ import { fromNodeHeaders } from "better-auth/node";
 
 
 export const listUsers = async (req: Request, res: Response) => {
-
     const query = req.query as Record<string, string | undefined>;
+    const { page, limit, skip } = req.pagination;
 
-    const users = await auth.api.listUsers({
+    const result = await auth.api.listUsers({
         query: {
-            limit: query.limit ? parseInt(query.limit) : 50,
-            offset: query.offset ? parseInt(query.offset) : undefined,
+            limit,
+            offset: skip,
             searchValue: query.searchValue,
             searchField: query.searchField as "email" | "name" | undefined,
             searchOperator: query.searchOperator as "contains" | "starts_with" | "ends_with" | undefined,
@@ -23,7 +23,22 @@ export const listUsers = async (req: Request, res: Response) => {
         },
         headers: fromNodeHeaders(req.headers),
     });
-    res.status(200).send({ success: true, data: users });
+
+    const totalCount = result.total;
+    const totalPages = Math.ceil(totalCount / limit);
+
+    res.status(200).send({
+        success: true,
+        data: result.users,
+        pagination: {
+            page,
+            limit,
+            totalCount,
+            totalPages,
+            hasNextPage: page < totalPages,
+            hasPreviousPage: page > 1,
+        },
+    });
 };
 
 export const createUser: RequestHandler = async (req, res) => {

@@ -4,18 +4,37 @@ import { CustomError } from "../lib/common";
 
 export const listCategories: RequestHandler = async (req, res) => {
     const query = req.query as Record<string, string | undefined>;
+    const { page, limit, skip } = req.pagination;
 
-    const categories = await prisma.category.findMany({
-        where: {
-            isActive: query.isActive ? query.isActive === "true" : undefined,
-            name: query.searchValue ? { contains: query.searchValue, mode: "insensitive" } : undefined,
+    const where = {
+        isActive: query.isActive ? query.isActive === "true" : undefined,
+        name: query.searchValue ? { contains: query.searchValue, mode: "insensitive" as const } : undefined,
+    };
+
+    const [categories, totalCount] = await Promise.all([
+        prisma.category.findMany({
+            where,
+            skip,
+            take: limit,
+            orderBy: query.sortBy ? { [query.sortBy]: query.sortDirection === "desc" ? "desc" : "asc" } : undefined,
+        }),
+        prisma.category.count({ where }),
+    ]);
+
+    const totalPages = Math.ceil(totalCount / limit);
+
+    res.status(200).send({
+        success: true,
+        data: categories,
+        pagination: {
+            page,
+            limit,
+            totalCount,
+            totalPages,
+            hasNextPage: page < totalPages,
+            hasPreviousPage: page > 1,
         },
-        skip: query.offset ? parseInt(query.offset) : undefined,
-        take: query.limit ? parseInt(query.limit) : 20,
-        orderBy: query.sortBy ? { [query.sortBy]: query.sortDirection === "desc" ? "desc" : "asc" } : undefined,
     });
-
-    res.status(200).send({ success: true, data: categories });
 };
 
 export const getCategory: RequestHandler = async (req, res) => {

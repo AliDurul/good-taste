@@ -45,6 +45,15 @@ export async function errorHandler(err: unknown, req: Request, res: Response, ne
     });
 }
 
+// PAGINATION MIDDLEWARE
+export const parsePagination = (defaultLimit = 20): RequestHandler => (req, _res, next) => {
+    const query = req.query as Record<string, string | undefined>;
+    const page = Math.max(1, query.page ? parseInt(query.page) : 1);
+    const limit = Math.max(1, query.limit ? parseInt(query.limit) : defaultLimit);
+    req.pagination = { page, limit, skip: (page - 1) * limit };
+    next();
+};
+
 // ZOD VALIDATION MIDDLEWARE
 export const validate = (schema: z.ZodSchema) => (req: Request, res: Response, next: NextFunction) => {
     try {

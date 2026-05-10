@@ -1,10 +1,15 @@
-import z from "zod";
 
-export const idSchema = z.string().uuid();
+export type PaginationMeta = {
+  page: number;
+  limit: number;
+  totalCount: number;
+  totalPages: number;
+  hasNextPage: boolean;
+  hasPreviousPage: boolean;
+};
 
-export const paginationSchema = z.object({
-  page: z.number().int().positive().default(1),
-  limit: z.number().int().positive().max(100).default(20),
-});
-
-export type Pagination = z.infer<typeof paginationSchema>;
+export type PaginatedResponse<T> = {
+  success: true;
+  data: T[];
+  pagination: PaginationMeta;
+};

@@ -4,10 +4,10 @@ const router: Router = Router();
 import { listCategories, getCategory, createCategory, updateCategory, deleteCategory } from "../controllers/category.controller";
 import { categoryCreateSchema, categoryUpdateSchema } from "@workspace/schemas";
 import { requireRole } from "../middlewares/auth.middleware";
-import { validate } from "../middlewares/common";
+import { validate, parsePagination } from "../middlewares/common";
 
 router.route('/')
-    .get(listCategories)
+    .get(parsePagination(), listCategories)
     .post(requireRole(['admin']), validate(categoryCreateSchema),createCategory);
 
 router.route('/:id')

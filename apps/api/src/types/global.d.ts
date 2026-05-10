@@ -7,6 +7,11 @@ declare global {
       user?: typeof auth.$Infer.Session.user;
       session?: typeof auth.$Infer.Session.session;
       headers?: Record<string, string>;
+      pagination: {
+        page: number;
+        limit: number;
+        skip: number;
+      };
     }
   }
 }
