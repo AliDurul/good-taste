@@ -42,6 +42,7 @@ export const createProduct: RequestHandler = async (req, res) => {
 export const updateProduct: RequestHandler = async (req, res) => {
     const { id } = req.params as { id: string };
 
+
     const product = await prisma.product.update({
         where: { id },
         data: req.validatedBody

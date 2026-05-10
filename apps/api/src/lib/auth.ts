@@ -24,10 +24,14 @@ export const auth = betterAuth({
     ],
     advanced: {
         cookiePrefix: "goodtaste",
+        // useSecureCookies: process.env.NODE_ENV === "production",
         useSecureCookies: true,
         defaultCookieAttributes: {
             sameSite: "lax",
-            secure: process.env.NODE_ENV === "production",
+            // secure: process.env.NODE_ENV === "production",
+            secure: true,
+            path: "/",
+            httpOnly: true,
         }
     },
     socialProviders: {

@@ -83,9 +83,52 @@ generated/
 - Co-locate Zod schemas with their route handler or in a `schemas/` subdirectory
 
 ### Authentication (better-auth)
-- Use the `better-auth` Express adapter for session/token management
-- Auth routes mount on `/api/v1/auth/`
-- Protect routes with middleware that verifies the session from better-auth
+
+Server-side `auth` is from `src/lib/auth.ts`. Use `auth.api.*` for all operations and `fromNodeHeaders(req.headers)` to pass headers. Forward `Set-Cookie` headers from the auth response back to the client.
+
+```ts
+import { auth } from "../lib/auth";
+import { fromNodeHeaders } from "better-auth/node";
+
+const { headers } = await auth.api.signInEmail({
+    body: { email, password },
+    headers: fromNodeHeaders(req.headers),
+    returnHeaders: true,
+});
+const cookies = headers.getSetCookie();
+cookies.forEach(cookie => res.setHeader('Set-Cookie', cookie));
+```
+
+Plugins active: `expo()`, `bearer()` (dev only — remove in production), `admin({ adminRoles: ["admin"], defaultRole: "customer" })`.
+
+Auth routes are mounted at `/api/v1/auth/` via `auth.handler` — do not duplicate auth logic in controllers.
+
+### Middleware
+
+Protect routes with `requireAuth` or `requireRole` from `src/middlewares/auth.middleware.ts`. After `requireAuth`, `req.user` is populated and typed.
+
+```ts
+import { requireAuth, requireRole } from "../middlewares/auth.middleware";
+
+router.get('/profile', requireAuth, getProfile);
+router.delete('/users/:id', requireAuth, requireRole(["admin"]), deleteUser);
+```
+
+### Validation (Zod)
+
+Use `validate(schema)` from `src/middlewares/common.ts`. Attach validated data to `req.validatedBody` — never read `req.body` directly in controllers.
+
+```ts
+import { validate } from "../middlewares/common";
+import { mySchema } from "@workspace/schemas";
+
+router.post('/resource', validate(mySchema), createResource);
+
+// In controller — read from req.validatedBody, not req.body:
+const { field1, field2 } = req.validatedBody;
+```
+
+Always import schemas from `@workspace/schemas`. Only define a local schema when it is truly route-specific and will never be shared with the web app.
 
 ### Cloudflare Images
 - Use Cloudflare Images API for all user-uploaded media
