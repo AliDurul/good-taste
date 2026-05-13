@@ -1,8 +1,6 @@
 import type { Request, Response } from "express";
 import { RequestHandler } from "express";
-import { randomUUID } from "node:crypto";
 import { CustomError } from "../lib/common";
-import { hashPassword, verifyPassword } from "better-auth/crypto";
 import { auth } from "../lib/auth";
 import { fromNodeHeaders } from "better-auth/node";
 import { prisma } from "../lib/prisma";
@@ -52,48 +50,38 @@ export const createUser: RequestHandler = async (req, res) => {
     const effectiveRole = isAdminCreating ? (role ?? "customer") : "customer";
 
     // If the creator is an agent, bind this customer to them regardless of body
-    const effectiveAgentId: string | undefined = req.user?.role === "agent" ? req.user.id : assignedAgentId;
+    const effectiveAgentId: string | undefined =
+        req.user?.role === "agent" ? req.user.id : assignedAgentId;
 
-    const existing = await prisma.user.findUnique({ where: { email }, select: { id: true } });
 
-    if (existing) throw new CustomError("A user with this email already exists.", 409, true);
-
-    const userId = randomUUID();
-    const hashedPassword = await hashPassword(password);
-    const isValid = await verifyPassword({ hash: hashedPassword, password: password });
-
-    if(!isValid) {
-        throw new CustomError("Password hashing failed", 500, false);
+    interface CreateUserResult {
+        user?: { id: string };
+        id?: string;
     }
 
-    const user = await prisma.$transaction(async (tx) => {
-        const newUser = await tx.user.create({
+    let result = await auth.api.createUser({
+        body: {
+            email,
+            password,
+            name,
+            role: effectiveRole,
             data: {
-                id: userId,
-                name,
-                email,
-                emailVerified: false,
-                role: effectiveRole,
-                phone: phone ?? null,
-                address: address ?? null,
-                city: city ?? null,
-                country: country ?? null,
-                birthday: birthday ? new Date(birthday) : null,
-                assignedAgentId: effectiveAgentId ?? null,
+                phone,
+                address,
+                city,
+                country,
+                birthday: birthday ? new Date(birthday) : undefined,
+                assignedAgentId: effectiveAgentId
             },
-        });
+        },
+        headers: fromNodeHeaders(req.headers),
+    }) as CreateUserResult;
 
-        await tx.account.create({
-            data: {
-                id: randomUUID(),
-                accountId: userId,
-                providerId: "credential",
-                userId,
-                password: hashedPassword,
-            },
-        });
 
-        if (effectiveRole === "customer") {
+    const userId: string | undefined = result?.user?.id ?? result?.id;
+
+    if (userId && effectiveRole === "customer") {
+        await prisma.$transaction(async (tx) => {
             const bronzeTier = await tx.loyaltyTier.findFirst({ where: { name: "Bronze" } });
 
             if (!bronzeTier) {
@@ -102,7 +90,7 @@ export const createUser: RequestHandler = async (req, res) => {
 
             const referralCode = generateReferralCode();
 
-            await tx.user.update({
+            result = await tx.user.update({
                 where: { id: userId },
                 data: { referralCode, tierId: bronzeTier.id },
             });
@@ -110,14 +98,10 @@ export const createUser: RequestHandler = async (req, res) => {
             await tx.tierHistory.create({
                 data: { customerId: userId, fromTierId: null, toTierId: bronzeTier.id, reason: "initial" },
             });
+        });
+    }
 
-            return { ...newUser, referralCode, tierId: bronzeTier.id };
-        }
-
-        return newUser;
-    });
-
-    res.status(201).send({ success: true, data: user });
+    res.status(201).send({ success: true, data: result });
 };
 
 export const getUser: RequestHandler = async (req, res) => {

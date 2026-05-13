@@ -1,4 +1,4 @@
-import { requireAuth, requireRole } from "../middlewares/auth.middleware";
+import { authenticate, } from "../middlewares/auth.middleware";
 import { Router } from "express";
 import userRoutes from "./user.route";
 import sessionRoutes from './session.route';
@@ -17,30 +17,30 @@ const router: Router = Router();
 // router.use('/', authRoutes);
 
 // sessions
-// router.use('/sessions', requireAuth, sessionRoutes);
+// router.use('/sessions', authenticate, sessionRoutes);
 
 // wallet configs
-router.use('/wallet-configs', requireAuth, walletConfigRoutes);
+router.use('/wallet-configs', authenticate, walletConfigRoutes);
 
 // categories
-router.use('/categories', requireAuth, categoryRoutes);
+router.use('/categories', authenticate, categoryRoutes);
 
 // loyalty tiers
-router.use('/loyalty-tiers', requireAuth, loyaltyTierRoutes);
+router.use('/loyalty-tiers', authenticate, loyaltyTierRoutes);
 
 // tier benefits
-router.use('/tier-benefits', requireAuth, tierBenefitRoutes);
+router.use('/tier-benefits', authenticate, tierBenefitRoutes);
 
 // products
-router.use('/products', requireAuth, productRoutes);
+router.use('/products', authenticate, productRoutes);
 
 // variants
-router.use('/variants', requireAuth, variantRoutes);
+router.use('/variants', authenticate, variantRoutes);
 
 // users
-router.use('/users', userRoutes);
+router.use('/users', authenticate, userRoutes);
 
 // orders
-router.use('/orders', requireAuth, orderRoutes);
+router.use('/orders', authenticate, orderRoutes);
 
 export default router;

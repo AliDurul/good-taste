@@ -42,6 +42,7 @@ export const auth = betterAuth({
                 officer, // regular users
                 customer
             },
+            adminRoles: ["admin"],
             defaultRole: "customer",
         })
     ],

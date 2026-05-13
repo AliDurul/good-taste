@@ -3,7 +3,6 @@ import { Router } from "express";
 const router: Router = Router();
 import { listVariants, getVariant, createVariant, updateVariant, deleteVariant } from "../controllers/variant.controller";
 import { productCreateSchema, productUpdateSchema } from "@workspace/schemas";
-import { requireRole } from "../middlewares/auth.middleware";
 import { validate, parsePagination } from "../middlewares/common";
 
 router.route('/')

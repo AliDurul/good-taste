@@ -3,7 +3,7 @@ import { auth } from "../lib/auth";
 import { CustomError } from "../lib/common";
 import { fromNodeHeaders } from "better-auth/node";
 
-export async function requireAuth(req: Request, res: Response, next: NextFunction) {
+export async function authenticate(req: Request, res: Response, next: NextFunction) {
     const session = await auth.api.getSession({
         headers: fromNodeHeaders(req.headers),
     });
@@ -18,15 +18,23 @@ export async function requireAuth(req: Request, res: Response, next: NextFunctio
     next();
 }
 
-// Role checker middleware factory
-export function requireRole(roles: string[]) {
-    return (req: Request, res: Response, next: NextFunction) => {
-        if (!req.user) {
-            throw new CustomError("Unauthorized", 401, true);
+
+export const checkPermission = (resources: Record<string, string[]>) => {
+    return async (req: any, res: any, next: any) => {
+
+        // Check if user has required permission
+        const { success } = await auth.api.userHasPermission({
+            headers: fromNodeHeaders(req.headers),
+            body: {
+                userId: req.user.id,
+                permissions: resources,
+            },
+        });
+
+        if (!success) {
+            throw new CustomError("Forbidden - insufficient permissions", 403, true);
         }
-        if (!roles.includes(req.user.role!)) {
-            throw new CustomError("Insufficient permissions", 403, true);
-        }
+
         next();
     };
-}
+};
