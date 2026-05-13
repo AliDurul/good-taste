@@ -1,22 +1,12 @@
 import { Router } from "express";
 import { userBanSchema, userCreateSchema, userSetRoleSchema, userUpdateSchema } from "@workspace/schemas";
 import { validate, parsePagination } from "../middlewares/common";
-import { banUser, createUser, deleteUser, getUser, listUsers, setUserRole } from "../controllers/user.controller";
+import { banUser, createUser, deleteUser, getUser, listUsers, setUserRole, updateUser } from "../controllers/user.controller";
 
 const router: Router = Router();
 
 router.route('/')
     .get(parsePagination(50), listUsers)
-    .post(validate(userCreateSchema), createUser);
-
-router.route('/:id')
-    .get(getUser)
-    .put(validate(userUpdateSchema), createUser)
-    .delete(deleteUser);
-
-router.post('/:id/ban', validate(userBanSchema), banUser);
-router.post('/:id/unban', banUser);
-router.put('/:id/role', validate(userSetRoleSchema), setUserRole);
-
+    .post(createUser);
 
 export default router;

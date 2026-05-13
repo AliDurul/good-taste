@@ -1,18 +1,18 @@
 import { Router } from "express";
 
 const router: Router = Router();
-import { listProducts, getProduct, createProduct, updateProduct, deleteProduct } from "../controllers/product.controller";
+import { listVariants, getVariant, createVariant, updateVariant, deleteVariant } from "../controllers/variant.controller";
 import { productCreateSchema, productUpdateSchema } from "@workspace/schemas";
 import { requireRole } from "../middlewares/auth.middleware";
 import { validate, parsePagination } from "../middlewares/common";
 
 router.route('/')
-    .get(parsePagination(), listProducts)
-    .post(requireRole(['admin']), createProduct);
+    .get(parsePagination(), listVariants)
+    .post(createVariant);
 
 router.route('/:id')
-    .get(getProduct)
-    .put(requireRole(['admin']), updateProduct)
-    .delete(requireRole(['admin']), deleteProduct);
+    .get(getVariant)
+    .put(updateVariant)
+    .delete(deleteVariant);
 
 export default router;

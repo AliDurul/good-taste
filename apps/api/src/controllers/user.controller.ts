@@ -42,18 +42,28 @@ export const listUsers = async (req: Request, res: Response) => {
 };
 
 export const createUser: RequestHandler = async (req, res) => {
-    const { email, password, name, role, ...data } = req.validatedBody;
+    // this is from agent, admin, officer creating a user, so we can allow role to be set
+
+    const { email, password, name, role, ...data } = req.body as any;
+
+    const isAdminCreating = req.user?.role === "admin";
+
+    if (role == 'customer') {
+        // data.referralCode = 
+    }
 
     const user = await auth.api.createUser({
         body: {
             email,
             password,
             name,
-            role, // optional: "user", "admin", etc.
+            role: isAdminCreating ? role : 'customer',
             data, // optional: additional user fields
         },
         headers: fromNodeHeaders(req.headers),
     });
+
+    // send user email with password setup link
 
     res.status(201).send({ success: true, data: user });
 };

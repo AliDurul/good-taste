@@ -1,40 +1,87 @@
 @baseurl = http://localhost:8000/api/v1
-@token = {{signin.response.body.authToken}}
+@token = {{signInBetterAuth.response.body.token}}
+
+### BETTER AUTH
+
+# @name BetterAuth
+GET {{baseurl}}/auth/reference
+# Authorization: Bearer {{token}}
+
+
+###
 
 # @name currentSession
-GET {{baseurl}}/sessions/me
-Authorization: Bearer {{token}}
-
-###
-
-# @name signup
-POST {{baseurl}}/sign-up
-Content-Type: application/json
-
-{
-  "email": "admin@gmail.com",
-  "password": "password123",
-  "name": "Admin User"
-}
-
-### 
-
-# @name signin
-POST {{baseurl}}/sign-in
-Content-Type: application/json
-
-{
-  "email": "admin@gmail.com",
-  "password": "password123"
-}
-### 
-
-# @name signout
-POST {{baseurl}}/sign-out
+GET {{baseurl}}/auth/session/list
 Authorization: Bearer {{token}}
 
 
 ###
+
+# @name signUpBetterAuth
+POST {{baseurl}}/auth/sign-up/email
+Content-Type: application/json
+
+{
+  "email": "customer2@test.com",
+  "password": "pass1234",
+  "name": "customer 2",
+  "phone": "1234567890",
+  "birthday": "1990-01-01"
+}
+
+### 
+
+# @name signInBetterAuth
+POST {{baseurl}}/auth/sign-in/email
+Content-Type: application/json
+
+{
+  "email": "admin@test.com",
+  "password": "admin1234"
+}
+### 
+
+# @name signOutBetterAuth
+POST {{baseurl}}/auth/sign-out
+Authorization: Bearer {{token}}
+
+
+###
+
+# @name userCreateBetterAuth
+POST {{baseurl}}/auth/admin/create-user
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "email": "officer6@test.com",
+  "password": "pass1234",
+  "name": "officer 6",
+  "phone": "1234567890",
+  "birthday": "1990-01-01",
+  "role": "officer"
+}
+
+###
+
+# @name userUpdateBetterAuth
+POST {{baseurl}}/auth/admin/update-user
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+
+}
+
+###
+
+# @name listUsersBetterAuth
+GET {{baseurl}}/auth/admin/list-users
+Authorization: Bearer {{token}}
+
+
+### BETTER AUTH END
+
 
 # @name userlist
 GET {{baseurl}}/users
@@ -42,37 +89,76 @@ Authorization: Bearer {{token}}
 
 ###
 
-# @name usercreate
+# @name userCreate
 POST {{baseurl}}/users
+Content-Type: application/json
+# Authorization: Bearer {{token}}
+
+{
+    "name": "admin",
+    "email": "admin@test.com",
+    "image": "https://example.com/images/admin.jpg",
+    "password": "admin1234",
+    "role": "admin",
+    "phone": "1234567890",
+    "birthday": "1998-07-13"
+}
+
+### WALLET CONFIGS ###
+
+# @name walletConfigList
+GET {{baseurl}}/wallet-configs
+Authorization: Bearer {{token}}
+
+### 
+
+# @name walletConfigCreate
+POST {{baseurl}}/wallet-configs
+Authorization: Bearer {{token}}
 Content-Type: application/json
 
 {
-    "name": "John Doe",
-    "email": "john.doe@example.com",
-    "age": 30,
-    "password": "password123"
+    "key": "global",
+    "earnRatePercent": 0.01, 
+    "expiryMonths": 12,
+    "referralBonusReferrer": 5.00,
+    "referralBonusReferred": 2.50
 }
 
-###
+### CATEGORY ###
 
-# @name categorylist
+# @name categoryList
 GET {{baseurl}}/categories
 Authorization: Bearer {{token}}
 
 ###
 
-# @name categorycreate
+# @name categoryDelete
+delete {{baseurl}}/categories/3a15306c-10e8-4c4e-8bc4-5e1b7288ae83
+Authorization: Bearer {{token}}
+
+###
+
+# @name categoryCreate
 POST {{baseurl}}/categories
 Authorization: Bearer {{token}}
 Content-Type: application/json
 
 {
-    "name": "category 8",
-    "description": "This is the 8th category",
-    "image": "https://example.com/images/category8.jpg"
+     "name": "Maize", "description": "Having 8 types of products"
+}
+###
+
+# @name categoryUpdate
+put {{baseurl}}/categories/7c0c0f3f-ca0b-4d50-a914-18d89c82c303
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+    "description": "Having 8 types of product"
 }
 
-###
+### PRODUCTS ###
 
 # @name productlist
 GET {{baseurl}}/products
@@ -80,19 +166,148 @@ Authorization: Bearer {{token}}
 
 ###
 
-# @name productcreate
+# @name productDelete
+delete {{baseurl}}/products/3dac08c1-5661-4cf1-88cf-430c42e5e92a
+Authorization: Bearer {{token}}
+
+###
+
+# @name productCreate
 POST {{baseurl}}/products
 Authorization: Bearer {{token}}
 Content-Type: application/json
 
 {
-    "name": "Product 2",
-    "description": "This is the 2nd product",
-    "price": 19.99,
-    "images": ["https://example.com/images/product2.jpg"],
-    "isActive": true,
-    "pointsValue": 5,
-    "stockQty": 20,
-    "lowStockThreshold": 10,
-    "categoryId": "3e49a970-a3e9-406a-9f66-a4a28b62ecff"
+        "name": "Super Roller",
+        "description": "Super Roller",
+        "images": ["https://example.com/images/productroller12_5.jpg"],
+        "isActive": true,
+        "categoryId": "737b2989-5e04-48d8-9506-a98666eb427f",
+        "variants": [
+            {
+                "weightKg": 25,
+                "weightLabel": "25kg",
+                "price": 300.00,
+                "earnValue": 3.00,
+                "images": ["https://cdn.cloudflare.com/variants/breakfastzns-25kg.jpg"],
+                "stockQty": 0,
+                "lowStockThreshold": 30
+            }
+        ]
+}
+
+
+### VARIANTS ###
+
+# @name variantlist
+GET {{baseurl}}/variants
+# ?ids=0a68412b-1a16-48b1-9fd3-b14343ee4803,0bfa83d6-012d-4c63-ad35-dd20a9b2a77c
+?includeProduct=true
+Authorization: Bearer {{token}}
+
+###
+
+# @name variantCreate
+post {{baseurl}}/variants
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+    "weightKg": 25,
+    "weightLabel": "25kg",
+    "price": 250.00,
+    "pointsValue": 2.50,
+    "images": ["https://cdn.cloudflare.com/variants/breakfast-25kg.jpg"],
+    "stockQty": 0,
+    "lowStockThreshold": 30
+}
+
+
+### VARIANTS END ###
+
+### LOYALTY TIERS ###
+
+# @name loyaltyTierList
+GET {{baseurl}}/loyalty-tiers
+Authorization: Bearer {{token}}
+
+
+###
+
+# @name loyaltyTierCreate
+POST {{baseurl}}/loyalty-tiers
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+        "name": "Gold",
+        "minSpend": 2000,
+        "maxSpend": null,
+        "color": "#ffd700"
+}
+
+### TIER BENEFITS ###
+
+# @name tierBenefitList
+GET {{baseurl}}/tier-benefits
+Authorization: Bearer {{token}}
+
+
+###
+
+# @name tierBenefitCreate
+POST {{baseurl}}/tier-benefits
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+"tierId": "15452086-58c4-4ab6-aaa6-be035fc18ec9",
+        "description": "Earn 2% back on all purchases + early access to sales + exclusive offers"
+}
+
+
+### VARIANTS END ###
+
+# @name orderList
+GET {{baseurl}}/orders
+Authorization: Bearer {{token}}
+
+###
+
+# @name previewBasket
+POST {{baseurl}}/orders/preview
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "items":[
+    {
+      "variantId": "0bfa83d6-012d-4c63-ad35-dd20a9b2a77c",
+      "quantity": 2
+    },
+    {
+      "variantId": "11b37f7b-a765-4a82-ac7f-c04ca388d2e6",
+      "quantity": 1
+    }
+  ]
+}
+
+###
+
+# @name orderCreate
+POST {{baseurl}}/orders
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "items":[
+    {
+      "variantId": "0bfa83d6-012d-4c63-ad35-dd20a9b2a77c",
+      "quantity": 2
+    },
+    {
+      "variantId": "11b37f7b-a765-4a82-ac7f-c04ca388d2e6",
+      "quantity": 1
+    }
+  ]
 }

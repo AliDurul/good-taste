@@ -3,20 +3,62 @@ import { betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
 import { prisma } from "./prisma";
 import { admin, openAPI } from "better-auth/plugins";
-import { expo } from "@better-auth/expo"; 
+import { expo } from "@better-auth/expo";
 import { bearer } from "better-auth/plugins";
 
 export const auth = betterAuth({
     database: prismaAdapter(prisma, {
         provider: "postgresql"
     }),
+    user: {
+        additionalFields: {
+            // Add your custom fields here
+            address: {
+                type: "string",
+                required: false,
+            },
+            city: {
+                type: "string",
+                required: false,
+            },
+            country: {
+                type: "string",
+                required: false,
+            },
+            walletBalance: {
+                type: "string",
+                required: false,
+            },
+            totalSpend: {
+                type: "string",
+                required: false,
+            },
+            phone: {
+                type: "string",
+                required: false,
+            },
+            assignedAgentId: {
+                type: "string",
+                required: false,
+            },
+            referredById: {
+                type: "string",
+                required: false,
+            },
+            tierId: {
+                type: "string",
+                required: false,
+            }
+        }
+    },
     emailAndPassword: {
         enabled: true,
         requireEmailVerification: false,
     },
     plugins: [
-        expo(), 
+        expo(),
         bearer(), // dev-only, remove in production
+        openAPI(),
         admin({
             adminRoles: ["admin"],
             defaultRole: "customer",

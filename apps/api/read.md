@@ -74,21 +74,6 @@ You'll get a **Scalar OpenAPI interface** where you can:
 
 ---
 
-## Option 2: Postman / REST Client
-
-Since Better Auth exposes standard REST endpoints, you can test with any HTTP client.
-
-### Key Endpoints
-
-| Endpoint | Method | Description | Auth Required |
-|----------|--------|-------------|---------------|
-| `/api/auth/sign-in/email` | POST | Sign in with email/password | ❌ |
-| `/api/auth/sign-up/email` | POST | Register new user | ❌ |
-| `/api/auth/sign-out` | POST | Sign out | ✅ |
-| `/api/auth/session` | GET | Get current session | ✅ |
-| `/api/auth/admin/list-users` | GET | List all users (admin) | ✅ Admin |
-
-### Testing Workflow in Postman/REST Client
 
 #### 1. Sign Up / Sign In
 
@@ -132,21 +117,7 @@ Authorization: Bearer your-bearer-token-here
 
 #### 3. Full Admin API Example (REST Client file)
 
-Create a `test.http` file in VS Code:
 
-```http
-@baseUrl = http://localhost:3000
-@contentType = application/json
-
-### 1. Sign in as admin
-# @name login
-POST {{baseUrl}}/api/auth/sign-in/email
-Content-Type: {{contentType}}
-
-{
-  "email": "admin@example.com",
-  "password": "admin123"
-}
 
 ### 2. Store session cookie (manually copy from response)
 # After login, copy the set-cookie header value
@@ -220,37 +191,99 @@ Then import the JSON into Postman (Import → Paste Raw Text).
 console.log("Available endpoints:", Object.keys(auth.api));
 ```
 
+
 ---
 
-## Quick Tip: Create an Admin User First
+ Based on your configuration with `basePath: "/api/v1/auth"`, here are all the default routes Better Auth provides:
 
-Before testing admin endpoints, create an admin user:
+## Core Authentication Routes (Email/Password)
 
+| Method | Path | Description |
+|--------|------|-------------|
+| `POST` | `/api/v1/auth/sign-up/email` | Register new user with email/password |
+| `POST` | `/api/v1/auth/sign-in/email` | Sign in with email/password |
+| `POST` | `/api/v1/auth/sign-out` | Sign out current user |
+
+## Session Routes
+
+| Method | Path | Description |
+|--------|------|-------------|
+| `GET` | `/api/v1/auth/session` | Get current session |
+| `GET` | `/api/v1/auth/session/list` | List all active sessions |
+| `POST` | `/api/v1/auth/session/revoke` | Revoke a specific session |
+| `POST` | `/api/v1/auth/session/remove-all` | Remove all sessions |
+
+## Social OAuth Routes
+
+| Method | Path | Description |
+|--------|------|-------------|
+| `POST` | `/api/v1/auth/sign-in/social` | Initiate social sign-in |
+| `GET` | `/api/v1/auth/callback/:provider` | OAuth callback (e.g., `/callback/google`, `/callback/facebook`) |
+
+## Email Verification Routes
+
+| Method | Path | Description |
+|--------|------|-------------|
+| `POST` | `/api/v1/auth/send-verification-email` | Send verification email |
+| `GET` | `/api/v1/auth/verify-email` | Verify email with token |
+
+## Password Management Routes
+
+| Method | Path | Description |
+|--------|------|-------------|
+| `POST` | `/api/v1/auth/forget-password` | Request password reset |
+| `POST` | `/api/v1/auth/reset-password` | Reset password with token |
+| `POST` | `/api/v1/auth/change-password` | Change password (authenticated) |
+| `POST` | `/api/v1/auth/update-user` | Update user info |
+
+## User Account Routes
+
+| Method | Path | Description |
+|--------|------|-------------|
+| `GET` | `/api/v1/auth/account` | Get current user info |
+| `POST` | `/api/v1/auth/account/link` | Link social account |
+| `POST` | `/api/v1/auth/account/unlink` | Unlink social account |
+| `GET` | `/api/v1/auth/accounts` | List linked accounts |
+| `POST` | `/api/v1/auth/delete-user` | Delete user account |
+
+## Admin Plugin Routes (from your config)
+
+| Method | Path | Description |
+|--------|------|-------------|
+| `GET` | `/api/v1/auth/admin/list-users` | List all users |
+| `POST` | `/api/v1/auth/admin/set-role` | Set user role |
+| `POST` | `/api/v1/auth/admin/create-user` | Create user |
+| `POST` | `/api/v1/auth/admin/ban-user` | Ban/unban user |
+| `POST` | `/api/v1/auth/admin/impersonate` | Impersonate user |
+| `POST` | `/api/v1/auth/admin/stop-impersonating` | Stop impersonation |
+
+## Bearer Plugin Routes (from your config)
+
+| Method | Path | Description |
+|--------|------|-------------|
+| `GET` | `/api/v1/auth/token` | Get bearer token from session |
+
+## Full Route List
+
+To see all available routes in your app, you can:
+
+1. **Programmatically access them:**
 ```ts
-// One-time script: create-admin.ts
-import { auth } from "./lib/auth";
+import { auth } from "./auth";
 
-async function createAdmin() {
-    const user = await auth.api.signUpEmail({
-        body: {
-            email: "admin@example.com",
-            password: "admin123",
-            name: "Admin User",
-        },
-    });
-    
-    // Set as admin directly in DB or use setRole
-    await auth.api.setRole({
-        body: {
-            userId: user.user.id,
-            role: "admin",
-        },
-    });
-    
-    console.log("Admin created:", user.user.id);
-}
-
-createAdmin();
+// Get all registered endpoints
+const routes = auth.api.getEndpoints();
+console.log(routes);
 ```
 
----
+2. **Enable the OpenAPI plugin** (add to your plugins array):
+```ts
+import { openAPI } from "better-auth/plugins";
+
+plugins: [
+    // ... your other plugins
+    openAPI(), // adds /api/v1/auth/reference with interactive docs
+]
+```
+
+Then visit `/api/v1/auth/reference` to see all endpoints with their schemas and test them interactively.

@@ -27,13 +27,13 @@ export const productCreateSchema = z
     .object({
         name: z.string().min(1),
         description: z.string().optional(),
-        price: z.number().positive(),
-        images: z.array(z.string().url()).optional(),
+        // price: z.number().positive(),
+        images: z.array(z.string().url()),
         isActive: z.boolean().default(true),
-        pointsValue: z.number().int().positive(),
-        stockQty: z.number().int().nonnegative().default(0),
-        lowStockThreshold: z.number().int().nonnegative().default(10),
-        lastReStockDate: z.date().optional(),
+        // pointsValue: z.number().int().positive(),
+        // stockQty: z.number().int().nonnegative().default(0),
+        // lowStockThreshold: z.number().int().nonnegative().default(10),
+        // lastReStockDate: z.date().optional(),
         categoryId: z.string().uuid(),
     })
     .strict();

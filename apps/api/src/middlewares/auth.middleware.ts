@@ -8,8 +8,6 @@ export async function requireAuth(req: Request, res: Response, next: NextFunctio
         headers: fromNodeHeaders(req.headers),
     });
 
-    // console.log('session', fromNodeHeaders(req.headers));
-
     if (!session) {
         throw new CustomError("No active session", 401, true);
     }

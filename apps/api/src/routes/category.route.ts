@@ -8,11 +8,11 @@ import { validate, parsePagination } from "../middlewares/common";
 
 router.route('/')
     .get(parsePagination(), listCategories)
-    .post(requireRole(['admin']), validate(categoryCreateSchema),createCategory);
+    .post(requireRole(['admin']), createCategory);
 
 router.route('/:id')
     .get(getCategory)
-    .put(requireRole(['admin']),validate(categoryUpdateSchema), updateCategory)
+    .put(requireRole(['admin']), updateCategory)
     .delete(requireRole(['admin']), deleteCategory);
 
 export default router;

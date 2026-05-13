@@ -58,6 +58,43 @@ enum PromotionType {
   bundle
 }
 
+enum ReferralStatus {
+  pending
+  completed
+}
+
+enum NotificationType {
+  order_update
+  points_earned
+  points_expiry
+  promotion
+  flash_sale
+  birthday
+  tier_upgrade
+  tier_downgrade
+  referral_success
+  low_stock_alert
+  general
+}
+
+enum CampaignStatus {
+  draft
+  scheduled
+  sent
+  failed
+}
+
+enum OtpPurpose {
+  phone_verify
+  password_reset_phone
+}
+
+enum SenderRole {
+  customer
+  agent
+  admin
+}
+
 // =============================================================================
 // BETTER AUTH — DO NOT MODIFY THESE MODELS
 // Managed entirely by Better Auth. Changes here will break authentication.
@@ -92,6 +129,8 @@ model User {
   address String?
   city    String?
   country String?
+  lat     Float?
+  lng     Float?
 
   // Customer loyalty fields
   referralCode  String? @unique // generated on customer registration
@@ -103,17 +142,31 @@ model User {
   assignedAgent   User?   @relation("AgentCustomers", fields: [assignedAgentId], references: [id])
   customers       User[]  @relation("AgentCustomers")
 
+  // Referral chain
+  referredById  String?
+  referredBy    User?   @relation("UserReferrals", fields: [referredById], references: [id])
+  referredUsers User[]  @relation("UserReferrals")
+
   // Loyalty tier
   tierId String?
   tier   LoyaltyTier? @relation(fields: [tierId], references: [id])
 
   // ── Good Taste Ltd relations ──────────────────────────
-  ordersAsCustomer   Order[]             @relation("CustomerOrders")
-  ordersAsAgent      Order[]             @relation("AgentOrders")
-  walletTransactions WalletTransaction[]
-  tierHistories      TierHistory[]
-  qrCodesAsAgent     QRCode[]            @relation("AgentQRCodes")
-  qrCodesAsCustomer  QRCode[]            @relation("CustomerQRCodes")
+  otps                    OTP[]
+  ordersAsCustomer        Order[]             @relation("CustomerOrders")
+  ordersAsAgent           Order[]             @relation("AgentOrders")
+  walletTransactions      WalletTransaction[]
+  tierHistories           TierHistory[]
+  redemptionLogs          RedemptionLog[]
+  referralsSent           Referral[]          @relation("ReferrerReferrals")
+  referralReceived        Referral?           @relation("ReferredReferral")
+  notifications           Notification[]
+  campaignsCreated        Campaign[]
+  conversationsAsCustomer Conversation[]      @relation("CustomerConversations")
+  conversationsAsAgent    Conversation[]      @relation("AgentConversations")
+  messagesSent            Message[]
+  qrCodesAsAgent          QRCode[]            @relation("AgentQRCodes")
+  qrCodesAsCustomer       QRCode[]            @relation("CustomerQRCodes")
 
   @@index([role])
   @@index([assignedAgentId])
@@ -171,6 +224,26 @@ model Verification {
 }
 
 // =============================================================================
+// CUSTOM AUTH — PHONE OTP
+// Better Auth handles email verification via the Verification model above.
+// This OTP model covers SMS-based phone verification and phone password reset.
+// =============================================================================
+
+model OTP {
+  id        String     @id @default(uuid())
+  userId    String
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  code      String // 6-digit code
+  purpose   OtpPurpose
+  isUsed    Boolean    @default(false)
+  isExpired Boolean    @default(false) // set by cron when expiresAt is past
+  expiresAt DateTime // 10 minutes from creation
+  createdAt DateTime   @default(now())
+
+  @@index([userId, purpose])
+}
+
+// =============================================================================
 // CATALOGUE & STOCK
 // =============================================================================
 
@@ -183,9 +256,8 @@ model Category {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  products Product[] // one-to-many
-
-  @@map("category")
+  products   Product[] // one-to-many
+  promotions PromotionCategory[]
 }
 
 model Product {
@@ -198,7 +270,8 @@ model Product {
   categoryId String
   category   Category @relation(fields: [categoryId], references: [id])
 
-  variants ProductVariant[] // one-to-many
+  variants    ProductVariant[] // one-to-many
+  bundleItems PromotionBundleItem[]
 
   createdAt  DateTime    @default(now())
   updatedAt  DateTime    @updatedAt
@@ -206,7 +279,6 @@ model Product {
 
   @@index([categoryId])
   @@index([isActive])
-  @@map("product")
 }
 
 model ProductVariant {
@@ -235,13 +307,13 @@ model ProductVariant {
 
   orderItems OrderItem[]
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt            DateTime              @default(now())
+  updatedAt            DateTime              @updatedAt
+  promotionBundleItems PromotionBundleItem[]
 
   @@unique([productId, weightKg]) // can't have two 25kg variants of the same product
   @@index([productId])
   @@index([isOutOfStock])
-  @@map("product_variant")
 }
 
 // =============================================================================
@@ -276,8 +348,9 @@ model Order {
   cancelledAt     DateTime?
   cancelReason    String?
 
-  items  OrderItem[] // one-to-many
-  qrCode QRCode?
+  items            OrderItem[] // one-to-many
+  appliedPromotion AppliedPromotion? // one-to-one (for now, can be extended to many-to-many if needed)
+  qrCode           QRCode?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -286,7 +359,6 @@ model Order {
   @@index([agentId])
   @@index([status])
   @@index([createdAt(sort: Desc)])
-  @@map("order")
 }
 
 model OrderItem {
@@ -308,7 +380,20 @@ model OrderItem {
   productId    String?
 
   @@index([orderId])
-  @@map("order_item")
+}
+
+model AppliedPromotion {
+  id          String     @id @default(uuid())
+  orderId     String     @unique
+  order       Order      @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  promotionId String?
+  promotion   Promotion? @relation(fields: [promotionId], references: [id])
+
+  // Snapshot at time of order
+  promotionName  String
+  type           PromotionType
+  discountAmount Float         @default(0)
+  earnMultiplier Float         @default(1)
 }
 
 model QRCode {
@@ -334,7 +419,6 @@ model QRCode {
 
   @@index([code])
   @@index([expiresAt])
-  @@map("qr_code")
 }
 
 // =============================================================================
@@ -356,7 +440,6 @@ model WalletTransaction {
 
   @@index([customerId, createdAt(sort: Desc)])
   @@index([isExpired, expiresAt])
-  @@map("wallet_transaction")
 }
 
 // Singleton — always one row with key = 'global'
@@ -368,8 +451,6 @@ model WalletConfig {
   referralBonusReferrer Float    @default(5.00)
   referralBonusReferred Float    @default(2.50)
   updatedAt             DateTime @updatedAt
-
-  @@map("wallet_config")
 }
 
 model LoyaltyTier {
@@ -382,13 +463,13 @@ model LoyaltyTier {
 
   benefits          TierBenefit[]
   users             User[]
-  fromTierHistories TierHistory[] @relation("FromTier")
-  toTierHistories   TierHistory[] @relation("ToTier")
+  fromTierHistories TierHistory[]   @relation("FromTier")
+  toTierHistories   TierHistory[]   @relation("ToTier")
+  promotionTiers    PromotionTier[]
+  campaignTiers     CampaignTier[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-
-  @@map("loyalty_tier")
 }
 
 model TierBenefit {
@@ -398,7 +479,6 @@ model TierBenefit {
   description String
 
   @@index([tierId])
-  @@map("tier_benefit")
 }
 
 model TierHistory {
@@ -413,5 +493,238 @@ model TierHistory {
   changedAt  DateTime         @default(now())
 
   @@index([customerId, changedAt(sort: Desc)])
-  @@map("tier_history")
+}
+
+model Reward {
+  id           String  @id @default(uuid())
+  name         String
+  description  String?
+  currencyCost Float
+  image        String? // Cloudflare URL
+  isActive     Boolean @default(true)
+  stock        Int? // null = unlimited
+
+  redemptionLogs RedemptionLog[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model RedemptionLog {
+  id            String   @id @default(uuid())
+  customerId    String
+  customer      User     @relation(fields: [customerId], references: [id])
+  rewardId      String
+  reward        Reward   @relation(fields: [rewardId], references: [id])
+  rewardName    String // snapshot
+  currencySpent Float
+  redeemedAt    DateTime @default(now())
+
+  @@index([customerId, redeemedAt(sort: Desc)])
+}
+
+// =============================================================================
+// REFERRALS
+// =============================================================================
+
+model Referral {
+  id String @id @default(uuid())
+
+  referrerId String
+  referrer   User   @relation("ReferrerReferrals", fields: [referrerId], references: [id])
+
+  referredId String @unique // one person can only be referred once
+  referred   User   @relation("ReferredReferral", fields: [referredId], references: [id])
+
+  status ReferralStatus @default(pending)
+
+  firstOrderId   String? // set when status → completed
+  completedAt    DateTime?
+  referrerEarned Float? // currency awarded to referrer
+  referredEarned Float? // currency awarded to referred
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([referrerId])
+  @@index([status])
+}
+
+// =============================================================================
+// PROMOTIONS
+// =============================================================================
+
+model Promotion {
+  id             String        @id @default(uuid())
+  name           String
+  description    String?
+  type           PromotionType
+  value          Float?
+  earnMultiplier Float         @default(1)
+
+  startsAt   DateTime
+  endsAt     DateTime
+  isActive   Boolean  @default(false) // toggled by scheduler at startsAt / endsAt
+  usageLimit Int? // null = unlimited
+  usageCount Int      @default(0)
+
+  createdById String? // admin user id
+
+  targetTiers      PromotionTier[]
+  targetCategories PromotionCategory[]
+  bundleItems      PromotionBundleItem[]
+  appliedOrders    AppliedPromotion[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([isActive])
+  @@index([startsAt, endsAt])
+}
+
+// Join table: Promotion ↔ LoyaltyTier (empty = applies to all tiers)
+model PromotionTier {
+  promotionId String
+  promotion   Promotion   @relation(fields: [promotionId], references: [id], onDelete: Cascade)
+  tierId      String
+  tier        LoyaltyTier @relation(fields: [tierId], references: [id], onDelete: Cascade)
+
+  @@id([promotionId, tierId])
+}
+
+// Join table: Promotion ↔ Category (empty = applies to all categories)
+model PromotionCategory {
+  promotionId String
+  promotion   Promotion @relation(fields: [promotionId], references: [id], onDelete: Cascade)
+  categoryId  String
+  category    Category  @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  @@id([promotionId, categoryId])
+}
+
+model PromotionBundleItem {
+  id          String    @id @default(uuid())
+  promotionId String
+  promotion   Promotion @relation(fields: [promotionId], references: [id], onDelete: Cascade)
+
+  variantId String // specific size, e.g. "Breakfast 25kg"
+  variant   ProductVariant @relation(fields: [variantId], references: [id])
+  quantity  Int
+  product   Product?       @relation(fields: [productId], references: [id])
+  productId String?
+
+  @@index([promotionId])
+}
+
+// =============================================================================
+// NOTIFICATIONS
+// =============================================================================
+
+model Notification {
+  id     String           @id @default(uuid())
+  userId String
+  user   User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title  String
+  body   String
+  type   NotificationType
+
+  // Deep-link payload passed to mobile app on notification tap
+  data Json?
+
+  isRead Boolean   @default(false)
+  readAt DateTime?
+
+  createdAt DateTime @default(now())
+
+  @@index([userId, createdAt(sort: Desc)])
+  @@index([userId, isRead])
+}
+
+model Campaign {
+  id    String           @id @default(uuid())
+  title String
+  body  String
+  type  NotificationType @default(general)
+
+  // Targeting — empty = broadcast to all
+  targetTiers CampaignTier[]
+  targetRoles String[] // "customer" | "agent"
+
+  scheduledAt    DateTime?
+  sentAt         DateTime?
+  status         CampaignStatus @default(draft)
+  recipientCount Int            @default(0)
+
+  createdById String?
+  createdBy   User?   @relation(fields: [createdById], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([status, scheduledAt])
+}
+
+// Join table: Campaign ↔ LoyaltyTier
+model CampaignTier {
+  campaignId String
+  campaign   Campaign    @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  tierId     String
+  tier       LoyaltyTier @relation(fields: [tierId], references: [id], onDelete: Cascade)
+
+  @@id([campaignId, tierId])
+}
+
+// =============================================================================
+// CHAT (WebSocket-ready)
+// =============================================================================
+
+model Conversation {
+  id String @id @default(uuid())
+
+  customerId String
+  customer   User   @relation("CustomerConversations", fields: [customerId], references: [id])
+
+  agentId String
+  agent   User   @relation("AgentConversations", fields: [agentId], references: [id])
+
+  lastMessage     String?
+  lastMessageAt   DateTime?
+  lastMessageById String?
+
+  // Separate unread counts per side — decremented on WebSocket read event
+  unreadByCustomer Int @default(0)
+  unreadByAgent    Int @default(0)
+
+  isActive Boolean   @default(true)
+  messages Message[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([customerId, agentId]) // one conversation per customer-agent pair
+  @@index([customerId, lastMessageAt(sort: Desc)])
+  @@index([agentId, lastMessageAt(sort: Desc)])
+}
+
+model Message {
+  id             String       @id @default(uuid())
+  conversationId String
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  senderId   String
+  sender     User       @relation(fields: [senderId], references: [id])
+  senderRole SenderRole
+
+  body String
+
+  isRead Boolean   @default(false)
+  readAt DateTime?
+
+  // Optional: attach an order to a message
+  attachedOrderId String?
+
+  createdAt DateTime @default(now())
+
+  // Ascending index — messages always fetched oldest → newest for chat history
+  @@index([conversationId, createdAt(sort: Asc)])
 }
