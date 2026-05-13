@@ -92,16 +92,11 @@ export const findApplicablePromotion = async (customerId: string, variantIds: st
 
     const now = new Date();
 
-    // Fetch all currently active promotions
-    const promotions = await prisma.promotion.findMany({
+    const allPromotions = await prisma.promotion.findMany({
         where: {
             isActive: true,
             startsAt: { lte: now },
             endsAt: { gte: now },
-            OR: [
-                { usageLimit: null },
-                { usageCount: { lt: prisma.promotion.fields.usageLimit } },
-            ],
         },
         include: {
             targetTiers: true,
@@ -109,14 +104,15 @@ export const findApplicablePromotion = async (customerId: string, variantIds: st
         },
     });
 
-    console.log(promotions);
+    // Filter out promotions that have exceeded their usage limit
+    const promotions = allPromotions.filter(
+        (p) => p.usageLimit === null || p.usageCount < p.usageLimit
+    );
 
     for (const promo of promotions) {
-        // Tier check — empty targetTiers means applies to all
+        // Tier check — empty targetTiers means applies to all tiers
         if (promo.targetTiers.length > 0) {
-            const tierMatch = promo.targetTiers.some(
-                (t:any) => t.tierId === customer?.tierId
-            );
+            const tierMatch = promo.targetTiers.some((t) => t.tierId === customer?.tierId);
             if (!tierMatch) continue;
         }
 
@@ -127,9 +123,7 @@ export const findApplicablePromotion = async (customerId: string, variantIds: st
         const bundleItems = await prisma.promotionBundleItem.findMany({
             where: { promotionId: promo.id },
         });
-        const allPresent = bundleItems.every((bi:any) =>
-            variantIds.includes(bi.variantId)
-        );
+        const allPresent = bundleItems.every((bi) => variantIds.includes(bi.variantId));
         if (allPresent) return promo;
     }
 

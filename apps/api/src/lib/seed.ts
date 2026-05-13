@@ -267,6 +267,15 @@ const workers = [
         "role": "officer",
         "phone": "1234567890",
         "birthday": "1990-01-01"
+    },
+    {
+        "name": "customer1",
+        "email": "customer1@test.com",
+        "image": "https://example.com/images/customer1.jpg",
+        "password": "pass1234",
+        "role": "customer",
+        "phone": "1234567890",
+        "birthday": "1990-01-01"
     }
 ]
 

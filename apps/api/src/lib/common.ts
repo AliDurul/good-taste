@@ -1,4 +1,5 @@
-import { pbkdf2Sync } from "node:crypto";
+import { pbkdf2Sync, randomBytes, scrypt } from "node:crypto";
+import { promisify } from "node:util";
 
 // CUSTOM ERROR CLASS
 export class CustomError extends Error {

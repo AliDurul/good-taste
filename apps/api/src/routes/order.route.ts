@@ -2,18 +2,18 @@ import { Router } from "express";
 
 const router: Router = Router();
 import { listOrders, getOrder, createOrder, updateOrder, deleteOrder, previewOrder } from "../controllers/order.controller";
-import { requireRole } from "../middlewares/auth.middleware";
 import { validate, parsePagination } from "../middlewares/common";
+import { orderCreateSchema, orderPreviewSchema, orderUpdateSchema } from "@workspace/schemas";
 
 router.route('/')
     .get(parsePagination(), listOrders)
-    .post(createOrder);
+    .post(validate(orderCreateSchema), createOrder);
 
-router.post('/preview', previewOrder);
+router.post('/preview', validate(orderPreviewSchema), previewOrder);
 
 router.route('/:id')
     .get(getOrder)
-    .put(updateOrder)
+    .put(validate(orderUpdateSchema), updateOrder)
     .delete(deleteOrder);
 
 export default router;

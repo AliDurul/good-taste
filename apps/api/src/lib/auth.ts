@@ -2,9 +2,10 @@
 import { betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
 import { prisma } from "./prisma";
-import { admin, openAPI } from "better-auth/plugins";
+import { admin as adminPlugin, openAPI } from "better-auth/plugins";
 import { expo } from "@better-auth/expo";
 import { bearer } from "better-auth/plugins";
+import { ac, admin, agent, customer, officer } from "./permissions";
 
 export const auth = betterAuth({
     database: prismaAdapter(prisma, {
@@ -12,43 +13,17 @@ export const auth = betterAuth({
     }),
     user: {
         additionalFields: {
-            // Add your custom fields here
-            address: {
-                type: "string",
-                required: false,
-            },
-            city: {
-                type: "string",
-                required: false,
-            },
-            country: {
-                type: "string",
-                required: false,
-            },
-            walletBalance: {
-                type: "string",
-                required: false,
-            },
-            totalSpend: {
-                type: "string",
-                required: false,
-            },
-            phone: {
-                type: "string",
-                required: false,
-            },
-            assignedAgentId: {
-                type: "string",
-                required: false,
-            },
-            referredById: {
-                type: "string",
-                required: false,
-            },
-            tierId: {
-                type: "string",
-                required: false,
-            }
+            phone: { type: "string", input: true, required: false, },
+            address: { type: "string", input: true, required: false, },
+            city: { type: "string", input: true, required: false, },
+            country: { type: "string", input: true, required: false, },
+            birthday: { type: "date", input: true, required: false, },
+            referralCode: { type: "string", input: false, required: false, },
+            walletBalance: { type: "number", input: false, required: false, },
+            totalSpend: { type: "number", input: false, required: false, },
+            assignedAgentId: { type: "string", input: true, required: false, },
+            referredById: { type: "string", input: true, required: false, },
+            tierId: { type: "string", input: false, required: false, },
         }
     },
     emailAndPassword: {
@@ -59,8 +34,14 @@ export const auth = betterAuth({
         expo(),
         bearer(), // dev-only, remove in production
         openAPI(),
-        admin({
-            adminRoles: ["admin"],
+        adminPlugin({
+            ac, // custom access controller
+            roles: {
+                admin, // full permissions
+                agent, // can create users
+                officer, // regular users
+                customer
+            },
             defaultRole: "customer",
         })
     ],

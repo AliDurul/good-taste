@@ -36,8 +36,8 @@ POST {{baseurl}}/auth/sign-in/email
 Content-Type: application/json
 
 {
-  "email": "admin@test.com",
-  "password": "admin1234"
+  "email": "agent1@test.com",
+  "password": "pass1234"
 }
 ### 
 
@@ -92,16 +92,15 @@ Authorization: Bearer {{token}}
 # @name userCreate
 POST {{baseurl}}/users
 Content-Type: application/json
-# Authorization: Bearer {{token}}
+Authorization: Bearer {{token}}
 
 {
-    "name": "admin",
-    "email": "admin@test.com",
-    "image": "https://example.com/images/admin.jpg",
-    "password": "admin1234",
-    "role": "admin",
-    "phone": "1234567890",
-    "birthday": "1998-07-13"
+        "name": "customer1",
+        "email": "customer1@test.com",
+        "image": "https://example.com/images/customer1.jpg",
+        "password": "pass1234",
+        "phone": "1234567890",
+        "birthday": "1990-01-01"
 }
 
 ### WALLET CONFIGS ###

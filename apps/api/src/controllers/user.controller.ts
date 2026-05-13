@@ -1,8 +1,12 @@
 import type { Request, Response } from "express";
 import { RequestHandler } from "express";
+import { randomUUID } from "node:crypto";
 import { CustomError } from "../lib/common";
+import { hashPassword, verifyPassword } from "better-auth/crypto";
 import { auth } from "../lib/auth";
 import { fromNodeHeaders } from "better-auth/node";
+import { prisma } from "../lib/prisma";
+import { generateReferralCode } from "../lib/utils";
 
 
 export const listUsers = async (req: Request, res: Response) => {
@@ -42,28 +46,76 @@ export const listUsers = async (req: Request, res: Response) => {
 };
 
 export const createUser: RequestHandler = async (req, res) => {
-    // this is from agent, admin, officer creating a user, so we can allow role to be set
-
-    const { email, password, name, role, ...data } = req.body as any;
+    const { email, password, name, role, phone, address, city, country, birthday, assignedAgentId } = req.body;
 
     const isAdminCreating = req.user?.role === "admin";
+    const effectiveRole = isAdminCreating ? (role ?? "customer") : "customer";
 
-    if (role == 'customer') {
-        // data.referralCode = 
+    // If the creator is an agent, bind this customer to them regardless of body
+    const effectiveAgentId: string | undefined = req.user?.role === "agent" ? req.user.id : assignedAgentId;
+
+    const existing = await prisma.user.findUnique({ where: { email }, select: { id: true } });
+
+    if (existing) throw new CustomError("A user with this email already exists.", 409, true);
+
+    const userId = randomUUID();
+    const hashedPassword = await hashPassword(password);
+    const isValid = await verifyPassword({ hash: hashedPassword, password: password });
+
+    if(!isValid) {
+        throw new CustomError("Password hashing failed", 500, false);
     }
 
-    const user = await auth.api.createUser({
-        body: {
-            email,
-            password,
-            name,
-            role: isAdminCreating ? role : 'customer',
-            data, // optional: additional user fields
-        },
-        headers: fromNodeHeaders(req.headers),
-    });
+    const user = await prisma.$transaction(async (tx) => {
+        const newUser = await tx.user.create({
+            data: {
+                id: userId,
+                name,
+                email,
+                emailVerified: false,
+                role: effectiveRole,
+                phone: phone ?? null,
+                address: address ?? null,
+                city: city ?? null,
+                country: country ?? null,
+                birthday: birthday ? new Date(birthday) : null,
+                assignedAgentId: effectiveAgentId ?? null,
+            },
+        });
 
-    // send user email with password setup link
+        await tx.account.create({
+            data: {
+                id: randomUUID(),
+                accountId: userId,
+                providerId: "credential",
+                userId,
+                password: hashedPassword,
+            },
+        });
+
+        if (effectiveRole === "customer") {
+            const bronzeTier = await tx.loyaltyTier.findFirst({ where: { name: "Bronze" } });
+
+            if (!bronzeTier) {
+                throw new CustomError("Bronze loyalty tier is not seeded. Run the database seed before creating customers.", 500, false);
+            }
+
+            const referralCode = generateReferralCode();
+
+            await tx.user.update({
+                where: { id: userId },
+                data: { referralCode, tierId: bronzeTier.id },
+            });
+
+            await tx.tierHistory.create({
+                data: { customerId: userId, fromTierId: null, toTierId: bronzeTier.id, reason: "initial" },
+            });
+
+            return { ...newUser, referralCode, tierId: bronzeTier.id };
+        }
+
+        return newUser;
+    });
 
     res.status(201).send({ success: true, data: user });
 };

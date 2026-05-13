@@ -183,7 +183,8 @@ model Category {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  products Product[] // one-to-many
+  products         Product[] // one-to-many
+  targetPromotions PromotionTargetCategory[]
 
   @@map("category")
 }
@@ -233,7 +234,8 @@ model ProductVariant {
 
   isActive Boolean @default(true)
 
-  orderItems OrderItem[]
+  orderItems       OrderItem[]
+  bundlePromotions PromotionBundleItem[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -382,8 +384,9 @@ model LoyaltyTier {
 
   benefits          TierBenefit[]
   users             User[]
-  fromTierHistories TierHistory[] @relation("FromTier")
-  toTierHistories   TierHistory[] @relation("ToTier")
+  fromTierHistories TierHistory[]         @relation("FromTier")
+  toTierHistories   TierHistory[]         @relation("ToTier")
+  targetPromotions  PromotionTargetTier[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -414,4 +417,71 @@ model TierHistory {
 
   @@index([customerId, changedAt(sort: Desc)])
   @@map("tier_history")
+}
+
+// =============================================================================
+// PROMOTIONS
+// =============================================================================
+
+model Promotion {
+  id          String        @id @default(uuid())
+  name        String
+  description String?
+  type        PromotionType
+  isActive    Boolean       @default(true)
+
+  // Discount value — interpretation depends on type:
+  // percentage_discount / bundle: percent off (e.g. 10 = 10%)
+  // fixed_discount: flat amount off (e.g. 5.00)
+  // double_points: earn multiplier (e.g. 2 = 2×)
+  // free_delivery: not used
+  discountValue Float?
+
+  startsAt   DateTime
+  endsAt     DateTime
+  usageLimit Int? // null = unlimited
+  usageCount Int      @default(0)
+
+  targetTiers      PromotionTargetTier[]
+  targetCategories PromotionTargetCategory[]
+  bundleItems      PromotionBundleItem[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([isActive, startsAt, endsAt])
+  @@map("promotion")
+}
+
+model PromotionTargetTier {
+  id          String      @id @default(uuid())
+  promotionId String
+  promotion   Promotion   @relation(fields: [promotionId], references: [id], onDelete: Cascade)
+  tierId      String
+  tier        LoyaltyTier @relation(fields: [tierId], references: [id], onDelete: Cascade)
+
+  @@unique([promotionId, tierId])
+  @@map("promotion_target_tier")
+}
+
+model PromotionTargetCategory {
+  id          String    @id @default(uuid())
+  promotionId String
+  promotion   Promotion @relation(fields: [promotionId], references: [id], onDelete: Cascade)
+  categoryId  String
+  category    Category  @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  @@unique([promotionId, categoryId])
+  @@map("promotion_target_category")
+}
+
+model PromotionBundleItem {
+  id          String         @id @default(uuid())
+  promotionId String
+  promotion   Promotion      @relation(fields: [promotionId], references: [id], onDelete: Cascade)
+  variantId   String
+  variant     ProductVariant @relation(fields: [variantId], references: [id], onDelete: Cascade)
+
+  @@unique([promotionId, variantId])
+  @@map("promotion_bundle_item")
 }

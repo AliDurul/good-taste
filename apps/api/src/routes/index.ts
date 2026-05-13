@@ -13,12 +13,11 @@ import tierBenefitRoutes from "./tier-benefit.route";
 
 const router: Router = Router();
 
-
 // auth
 // router.use('/', authRoutes);
+
 // sessions
 // router.use('/sessions', requireAuth, sessionRoutes);
-
 
 // wallet configs
 router.use('/wallet-configs', requireAuth, walletConfigRoutes);
@@ -38,17 +37,10 @@ router.use('/products', requireAuth, productRoutes);
 // variants
 router.use('/variants', requireAuth, variantRoutes);
 
-
 // users
 router.use('/users', userRoutes);
 
-
 // orders
-// router.use('/orders', requireAuth, orderRoutes);
-
-
-
-
-
+router.use('/orders', requireAuth, orderRoutes);
 
 export default router;
