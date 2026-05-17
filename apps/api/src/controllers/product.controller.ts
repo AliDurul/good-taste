@@ -7,10 +7,9 @@ export const listProducts: RequestHandler = async (req, res) => {
     const query = req.query as Record<string, string | undefined>;
     const { page, limit, skip } = req.pagination;
 
-
     const where: ProductWhereInput = {
         isActive: query.isActive ? query.isActive === "true" : undefined,
-        name: query.searchValue ? { contains: query.searchValue, mode: "insensitive" as const } : undefined,
+        name: query.search ? { contains: query.search, mode: "insensitive" as const } : undefined,
     };
 
     const orderBy: ProductOrderByWithRelationInput = query.sortBy ? { [query.sortBy]: query.sortDirection === "desc" ? "desc" : "asc" } : { createdAt: "desc" };

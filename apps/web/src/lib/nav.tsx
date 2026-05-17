@@ -27,14 +27,14 @@ export const navMain = [
   },
   {
     title: "Sales",
-    url: "#",
+    url: "/dashboard/sales",
     icon: <BotIcon />,
     roles: ["admin", "officer"],
-    items: [
-      { title: "List Sales",  url: "/dashboard/sales", roles: ["admin", "officer"] },
-      { title: "Create Sale", url: "/dashboard/sales/create", roles: ["admin"] },
-      { title: "Reports",  url: "/dashboard/sales/reports", roles: ["admin"] },
-    ],
+    // items: [
+    //   { title: "List Sales",  url: "/dashboard/sales", roles: ["admin", "officer"] },
+    //   { title: "Create Sale", url: "/dashboard/sales/create", roles: ["admin"] },
+    //   { title: "Reports",  url: "/dashboard/sales/reports", roles: ["admin"] },
+    // ],
   },
   {
     title: "Settings",

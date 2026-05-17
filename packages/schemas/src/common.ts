@@ -13,3 +13,7 @@ export type PaginatedResponse<T> = {
   data: T[];
   pagination: PaginationMeta;
 };
+
+export type ActionResult<T = void> =
+  | { success: true; data: T }
+  | { success: false; message: string; status: number };

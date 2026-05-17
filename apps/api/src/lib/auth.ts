@@ -31,7 +31,7 @@ export const auth = betterAuth({
         requireEmailVerification: false,
     },
     plugins: [
-        expo(),
+        expo(), // Required for Expo support
         bearer(), // dev-only, remove in production
         openAPI(),
         adminPlugin({

@@ -1,37 +1,40 @@
-import React, { Suspense } from 'react'
-import { SectionErrorBoundary } from '@/components/SectionErrorFallback'
+import React from 'react'
+import { DataSection } from '@/components/DataSection'
 import { getProducts } from '@/actions/queries';
+import ProductTable from './_components/ProductTable';
 
-export default function page() {
+export default function page({ searchParams }: IPageSearchParams) {
     return (
-        <div>
-            <h1>Products</h1>
-            <SectionErrorBoundary label="products">
-                <Suspense fallback={<div>Loading products...</div>}>
-                    <Products />
-                </Suspense>
-            </SectionErrorBoundary>
+
+        <div className='rounded-md border'>
+            <div className="flex flex-col gap-8 p-4 md:p-8">
+                <div className="flex flex-col gap-1">
+                    <h2 className="text-2xl font-semibold tracking-tight">
+                       Good Taste Products
+                    </h2>
+                    <p className="text-muted-foreground">
+                        A list of all the products in Good Taste. You can search, filter, and sort the products to find specific information. Use the actions menu to view more details about each product.
+                    </p>
+                </div>
+                <DataSection label="products">
+                    <Products searchParams={searchParams} />
+                </DataSection>
+            </div>
         </div>
     )
 }
 
-async function Products() {
-    const products = await getProducts();
+async function Products({searchParams}: IPageSearchParams) {
 
-    if (!products) {
-        return <div>No products found.</div>
+    const params = await searchParams;
+
+    const result = await getProducts(params);
+
+    if (result.data.length === 0) {
+        return <div>No result found.</div>
     }
 
     return (
-        <div>
-            {products.data.map((product) => (
-                <div key={product.id}>
-                    <h2>{product.name}</h2>
-                    <p>{product.description}</p>
-                    <p>Price: {product.price}</p>
-                    <p>Stock: {product.stockQty}</p>
-                </div>
-            ))}
-        </div>
+        <ProductTable result={result} />
     )
 }
