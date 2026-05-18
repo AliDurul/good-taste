@@ -261,7 +261,7 @@ export default function DataTable<TData, TValue>({
             {/* table */}
             <div className="overflow-hidden rounded-md border">
                 <Table>
-                    <TableHeader>
+                    <TableHeader className="bg-muted">
                         {table.getHeaderGroups().map((headerGroup) => (
                             <TableRow key={headerGroup.id}>
                                 {headerGroup.headers.map((header) => {
@@ -355,10 +355,10 @@ export default function DataTable<TData, TValue>({
                                         if (Number.isNaN(nextPage)) return
                                         table.setPageIndex(nextPage - 1)
                                     }}
-                                    className="w-15 text-center"
+                                    className="w-15 text-center font-extrabold"
                                     aria-label="Current page"
                                 />
-                                <p >of <span className="font-extrabold pl-2">{table.getPageCount()}</span></p>
+                                <p >of <span className=" pl-1">{table.getPageCount()}</span></p>
                             </div>
                         </PaginationItem>
                         <PaginationItem>

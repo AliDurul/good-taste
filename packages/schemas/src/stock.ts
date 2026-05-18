@@ -96,3 +96,27 @@ export interface IProductVariant {
     createdAt: Date;
     updatedAt: Date;
 }
+
+export interface IProductVariantWithProduct extends IProductVariant {
+    product: IProduct;
+}
+
+export const variantCreateSchema = z
+    .object({
+        productId: z.string().uuid(),
+        weightKg: z.number().positive(),
+        weightLabel: z.string().min(1),
+        price: z.number().positive(),
+        earnValue: z.number().nonnegative(),
+        images: z.array(z.string().url()).default([]),
+        stockQty: z.number().int().nonnegative().default(0),
+        lowStockThreshold: z.number().int().nonnegative().default(0),
+        isActive: z.boolean().default(true),
+    })
+    .strict();
+
+export type VariantCreate = z.infer<typeof variantCreateSchema>;
+
+export const variantUpdateSchema = variantCreateSchema.partial();
+
+export type VariantUpdate = z.infer<typeof variantUpdateSchema>;

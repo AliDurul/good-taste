@@ -17,6 +17,7 @@ import {
 } from "@workspace/ui/components/sidebar"
 import { ChevronRightIcon } from "lucide-react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 
 interface NavMainProps {
   items: {
@@ -32,6 +33,7 @@ interface NavMainProps {
 }
 
 export function NavMain({ items, }: NavMainProps) {
+  const pathname = usePathname();
 
   return (
     <SidebarGroup>
@@ -42,12 +44,12 @@ export function NavMain({ items, }: NavMainProps) {
             <Collapsible
               key={item.title}
               asChild
-              defaultOpen={item.isActive}
+              defaultOpen={item.isActive || item.items.some(sub => sub.url === pathname)}
               className="group/collapsible"
             >
               <SidebarMenuItem>
                 <CollapsibleTrigger asChild>
-                  <SidebarMenuButton tooltip={item.title}>
+                  <SidebarMenuButton tooltip={item.title} >
                     {item.icon}
                     <span>{item.title}</span>
                     <ChevronRightIcon className="ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
@@ -57,7 +59,7 @@ export function NavMain({ items, }: NavMainProps) {
                   <SidebarMenuSub>
                     {item.items?.map((subItem) => (
                       <SidebarMenuSubItem key={subItem.title}>
-                        <SidebarMenuSubButton asChild>
+                        <SidebarMenuSubButton asChild isActive={pathname === subItem.url}>
                           <Link href={subItem.url}>
                             <span>{subItem.title}</span>
                           </Link>
@@ -70,7 +72,7 @@ export function NavMain({ items, }: NavMainProps) {
             </Collapsible>
           ) : (
             <SidebarMenuItem key={item.title}>
-              <SidebarMenuButton tooltip={item.title} asChild>
+              <SidebarMenuButton tooltip={item.title} asChild isActive={pathname === item.url}>
                 <Link href={item.url}>
                   {item.icon}
                   <span>{item.title}</span>

@@ -10,18 +10,21 @@ export interface ApiFetchOptions extends RequestInit {
     params?: FetchParams
 }
 
-export async function apiFetch<T>(endpoint: string, options?: ApiFetchOptions): Promise<T> {
-    const { params, ...fetchOptions } = options ?? {}
-
+// Reads cookie — call this OUTSIDE 'use cache' boundaries
+export async function getSessionToken(): Promise<string | undefined> {
     const cookieStore = await cookies()
-    const sessionCookie = cookieStore.get('__Secure-goodtaste.session_token')?.value
+    return cookieStore.get('__Secure-goodtaste.session_token')?.value
+}
+
+export async function apiFetch<T>(endpoint: string, sessionToken: string | undefined, options?: ApiFetchOptions): Promise<T> {
+    const { params, ...fetchOptions } = options ?? {}
 
     const query = params
         ? '?' + new URLSearchParams(
             Object.entries(params)
                 .filter(([, v]) => v != null && v !== '')
                 .map(([k, v]) => [k, String(v)])
-          ).toString()
+        ).toString()
         : ''
 
     const res = await fetch(`${API_URL}${endpoint}${query}`, {
@@ -29,7 +32,7 @@ export async function apiFetch<T>(endpoint: string, options?: ApiFetchOptions): 
         headers: {
             ...fetchOptions?.headers,
             "Content-Type": "application/json",
-            ...(sessionCookie && { Cookie: `__Secure-goodtaste.session_token=${sessionCookie}` }),
+            ...(sessionToken && { Cookie: `__Secure-goodtaste.session_token=${sessionToken}` }),
         },
     })
 
@@ -41,13 +44,10 @@ export async function apiFetch<T>(endpoint: string, options?: ApiFetchOptions): 
     return res.json() as Promise<T>
 }
 
-/**
- * Safe variant for mutation server actions — never throws.
- * Do NOT use inside `'use cache'` functions (errors would be cached).
- */
-export async function safeApiFetch<T>(endpoint: string, options?: ApiFetchOptions): Promise<ActionResult<T>> {
+
+export async function safeApiFetch<T>(endpoint: string, sessionToken: string | undefined, options?: ApiFetchOptions): Promise<ActionResult<T>> {
     try {
-        const data = await apiFetch<T>(endpoint, options)
+        const data = await apiFetch<T>(endpoint, sessionToken, options)
         return { success: true, data }
     } catch (err) {
         if (err instanceof ApiError) {

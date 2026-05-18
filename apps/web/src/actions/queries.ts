@@ -1,56 +1,68 @@
 'use server'
 import { cacheLife, cacheTag } from 'next/cache'
-import type { IProduct, PaginatedResponse } from '@workspace/schemas'
-
-// import type { UserStats, Order, UserProfile } from './types'
-import { apiFetch, type FetchParams } from './apiFetch'
+import type { IProduct, IWalletConfig, ILoyaltyTier, PaginatedResponse, IProductCategory, IProductVariantWithProduct } from '@workspace/schemas'
+import { apiFetch, getSessionToken, type FetchParams } from './apiFetch'
 
 // Per-user cached stats — revalidates every minute, expires after 5 min
-export async function getProducts(params?: FetchParams) {
-  'use cache: private'
+async function fetchProducts(token: string | undefined, params?: FetchParams) {
+  'use cache'
   cacheTag('products')
   cacheLife('weeks')
-
-  return apiFetch<PaginatedResponse<IProduct>>('/products', { params })
+  return apiFetch<PaginatedResponse<IProduct>>('/products', token, { params })
 }
 
-// // Per-user cached orders — short stale time since orders change often
-// export async function getRecentOrders() {
-//   'use cache: private'
-//   cacheTag('orders')
-//   cacheLife({ stale: 15, revalidate: 30, expire: 120 })
+async function fetchCategories(token: string | undefined, params?: FetchParams) {
+  'use cache'
+  cacheTag('categories')
+  cacheLife('weeks')
+  return apiFetch<PaginatedResponse<IProductCategory>>('/categories', token, { params })
+}
 
-//   return apiFetch<Order[]>('/orders?limit=5')
-// }
+async function fetchWalletConfigs(token: string | undefined) {
+  'use cache'
+  cacheTag('wallet-configs')
+  cacheLife('hours')
+  return apiFetch<PaginatedResponse<IWalletConfig>>('/wallet-configs', token)
+}
 
-// // Per-user profile — longer cache, changes rarely
-// export async function getUserProfile() {
-//   'use cache: private'
-//   cacheTag('user-profile')
-//   cacheLife('hours')
+async function fetchLoyaltyTiers(token: string | undefined) {
+  'use cache'
+  cacheTag('loyalty-tiers')
+  cacheLife('hours')
+  return apiFetch<PaginatedResponse<ILoyaltyTier>>('/loyalty-tiers', token)
+}
 
-//   return apiFetch<UserProfile>('/users/me')
-// }
+async function fetchVariants(token: string | undefined, params?: FetchParams) {
+  'use cache'
+  cacheTag('variants')
+  cacheLife('minutes')
+  return apiFetch<PaginatedResponse<IProductVariantWithProduct>>('/variants', token, { params })
+}
 
-// // Shared/public data — not per-user, use regular 'use cache'
-// export async function getAnnouncements() {
-//   'use cache'
-//   cacheTag('announcements')
-//   cacheLife('minutes')
 
-//   return apiFetch<Announcement[]>('/announcements')
-// }
+// Public APIS
 
-// type Product = {
-//   id: string;
-//   name: string;
-//   isActive: boolean;
-//   price: number;
-//   pointsValue: number;
-//   stockQty: number;
-//   lowStockThreshold: number;
-//   categoryId: string;
-//   description?: string | undefined;
-//   images?: string[] | undefined;
-//   lastReStockDate?: Date | undefined;
-// }
+export async function getProducts(params?: FetchParams) {
+  const token = await getSessionToken()
+  return fetchProducts(token, params)
+}
+
+export async function getCategories(params?: FetchParams) {
+  const token = await getSessionToken()
+  return fetchCategories(token, params)
+}
+
+export async function getWalletConfigs() {
+  const token = await getSessionToken()
+  return fetchWalletConfigs(token)
+}
+
+export async function getLoyaltyTiers() {
+  const token = await getSessionToken()
+  return fetchLoyaltyTiers(token)
+}
+
+export async function getVariants(params?: FetchParams) {
+  const token = await getSessionToken()
+  return fetchVariants(token, params)
+}
