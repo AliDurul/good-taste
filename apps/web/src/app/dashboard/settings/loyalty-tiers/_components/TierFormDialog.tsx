@@ -19,6 +19,8 @@ import { Button } from '@workspace/ui/components/button'
 import { Input } from '@workspace/ui/components/input'
 import { Label } from '@workspace/ui/components/label'
 import { toast } from 'sonner'
+import { createLoyaltyTier, updateLoyaltyTier } from '@/actions/mutations'
+import { PlusIcon, XIcon } from 'lucide-react'
 
 const DEFAULT_VALUES: LoyaltyTierForm = {
     name: '',
@@ -26,6 +28,7 @@ const DEFAULT_VALUES: LoyaltyTierForm = {
     maxSpend: null,
     earnMultiplier: 1,
     color: '#6366f1',
+    benefits: [],
 }
 
 interface TierFormDialogProps {
@@ -52,21 +55,28 @@ export function TierFormDialog({ open, onOpenChange, tier }: TierFormDialogProps
             reset(
                 tier
                     ? {
-                          name: tier.name,
-                          minSpend: tier.minSpend,
-                          maxSpend: tier.maxSpend,
-                          earnMultiplier: tier.earnMultiplier,
-                          color: tier.color,
-                      }
+                        name: tier.name,
+                        minSpend: tier.minSpend,
+                        maxSpend: tier.maxSpend,
+                        earnMultiplier: tier.earnMultiplier,
+                        color: tier.color,
+                        benefits: tier.benefits ?? [],
+                    }
                     : DEFAULT_VALUES,
             )
         }
     }, [open, tier, reset])
 
-    async function onSubmit(_data: LoyaltyTierForm) {
-        // TODO: implement create/update action
-        toast.success(isEditing ? 'Tier updated' : 'Tier created')
-        onOpenChange(false)
+    async function onSubmit(data: LoyaltyTierForm) {
+        const result = isEditing && tier
+            ? await updateLoyaltyTier(tier.id, data)
+            : await createLoyaltyTier(data)
+        if (result.success) {
+            toast.success(result.message)
+            onOpenChange(false)
+        } else {
+            toast.error(result.message)
+        }
     }
 
     return (
@@ -77,65 +87,69 @@ export function TierFormDialog({ open, onOpenChange, tier }: TierFormDialogProps
                 </DialogHeader>
 
                 <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-5">
-                    {/* Name */}
-                    <div className="flex flex-col gap-1.5">
-                        <Label htmlFor="tier-name">Name</Label>
-                        <Controller
-                            name="name"
-                            control={control}
-                            render={({ field, fieldState }) => (
-                                <>
-                                    <Input
-                                        id="tier-name"
-                                        placeholder="e.g. Gold"
-                                        {...field}
-                                        aria-invalid={fieldState.invalid}
-                                        disabled={isSubmitting}
-                                    />
-                                    {fieldState.error && (
-                                        <p className="text-xs text-destructive">
-                                            {fieldState.error.message}
-                                        </p>
-                                    )}
-                                </>
-                            )}
-                        />
-                    </div>
+                    <div className="grid grid-cols-2 gap-4">
 
-                    {/* Color */}
-                    <div className="flex flex-col gap-1.5">
-                        <Label>Color</Label>
-                        <Controller
-                            name="color"
-                            control={control}
-                            render={({ field, fieldState }) => (
-                                <>
-                                    <div className="flex items-center gap-2">
-                                        <input
-                                            type="color"
-                                            value={field.value}
-                                            onChange={(e) => field.onChange(e.target.value)}
-                                            disabled={isSubmitting}
-                                            className="h-9 w-11 cursor-pointer rounded-lg border border-input bg-transparent p-0.5"
-                                        />
+                        {/* Name */}
+                        <div className="flex flex-col gap-1.5">
+                            <Label htmlFor="tier-name">Name</Label>
+                            <Controller
+                                name="name"
+                                control={control}
+                                render={({ field, fieldState }) => (
+                                    <>
                                         <Input
-                                            value={field.value}
-                                            onChange={(e) => field.onChange(e.target.value)}
-                                            placeholder="#000000"
-                                            maxLength={7}
-                                            className="font-mono uppercase flex-1"
+                                            id="tier-name"
+                                            placeholder="e.g. Gold"
+                                            {...field}
                                             aria-invalid={fieldState.invalid}
                                             disabled={isSubmitting}
                                         />
-                                    </div>
-                                    {fieldState.error && (
-                                        <p className="text-xs text-destructive">
-                                            {fieldState.error.message}
-                                        </p>
-                                    )}
-                                </>
-                            )}
-                        />
+                                        {fieldState.error && (
+                                            <p className="text-xs text-destructive">
+                                                {fieldState.error.message}
+                                            </p>
+                                        )}
+                                    </>
+                                )}
+                            />
+                        </div>
+
+                        {/* Color */}
+                        <div className="flex flex-col gap-1.5">
+                            <Label>Color</Label>
+                            <Controller
+                                name="color"
+                                control={control}
+                                render={({ field, fieldState }) => (
+                                    <>
+                                        <div className="flex items-center gap-2">
+                                            <Input
+                                                value={field.value}
+                                                onChange={(e) => field.onChange(e.target.value)}
+                                                placeholder="#000000"
+                                                maxLength={7}
+                                                className="font-mono uppercase flex-1"
+                                                aria-invalid={fieldState.invalid}
+                                                disabled={isSubmitting}
+                                            />
+                                            <input
+                                                type="color"
+                                                value={field.value}
+                                                onChange={(e) => field.onChange(e.target.value)}
+                                                disabled={isSubmitting}
+                                                className="h-9 w-11 cursor-pointer rounded-lg border border-input bg-transparent p-0.5"
+                                            />
+
+                                        </div>
+                                        {fieldState.error && (
+                                            <p className="text-xs text-destructive">
+                                                {fieldState.error.message}
+                                            </p>
+                                        )}
+                                    </>
+                                )}
+                            />
+                        </div>
                     </div>
 
                     {/* Spend Range */}
@@ -237,6 +251,57 @@ export function TierFormDialog({ open, onOpenChange, tier }: TierFormDialogProps
                         </p>
                     </div>
 
+                    {/* Benefits */}
+                    <div className="flex flex-col gap-1.5">
+                        <Label>Benefits</Label>
+                        <Controller
+                            name="benefits"
+                            control={control}
+                            render={({ field }) => (
+                                <div className="flex flex-col gap-2">
+                                    {field.value.map((benefit: string, index: number) => (
+                                        <div key={index} className="flex items-center gap-2">
+                                            <Input
+                                                value={benefit}
+                                                onChange={(e) => {
+                                                    const next = [...field.value]
+                                                    next[index] = e.target.value
+                                                    field.onChange(next)
+                                                }}
+                                                placeholder="e.g. Earn 1% back on all purchases"
+                                                disabled={isSubmitting}
+                                            />
+                                            <Button
+                                                type="button"
+                                                variant="ghost"
+                                                size="icon"
+                                                onClick={() =>
+                                                    field.onChange(
+                                                        field.value.filter((_: string, i: number) => i !== index),
+                                                    )
+                                                }
+                                                disabled={isSubmitting}
+                                            >
+                                                <XIcon className="h-4 w-4" />
+                                            </Button>
+                                        </div>
+                                    ))}
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => field.onChange([...field.value, ''])}
+                                        disabled={isSubmitting}
+                                        className="w-fit"
+                                    >
+                                        <PlusIcon className="mr-1.5 h-4 w-4" />
+                                        Add Benefit
+                                    </Button>
+                                </div>
+                            )}
+                        />
+                    </div>
+
                     <DialogFooter>
                         <Button
                             type="button"
@@ -250,8 +315,8 @@ export function TierFormDialog({ open, onOpenChange, tier }: TierFormDialogProps
                             {isSubmitting
                                 ? 'Saving…'
                                 : isEditing
-                                  ? 'Save Changes'
-                                  : 'Create Tier'}
+                                    ? 'Save Changes'
+                                    : 'Create Tier'}
                         </Button>
                     </DialogFooter>
                 </form>

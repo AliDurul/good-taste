@@ -11,13 +11,13 @@ import {
 } from '@workspace/ui/components/dropdown-menu'
 import { Button } from '@workspace/ui/components/button'
 import { MoreHorizontal } from 'lucide-react'
-import { IProductVariantWithProduct } from '@workspace/schemas'
+import { IProductVariant } from '@workspace/schemas'
 import { DeleteDialog } from '@/components/DeleteDialog'
 import { deleteVariant } from '@/actions/mutations'
 import { VariantFormSheet } from './VariantFormSheet'
 
 interface VariantRowActionsProps {
-    variant: IProductVariantWithProduct
+    variant: IProductVariant
 }
 
 export function VariantRowActions({ variant }: VariantRowActionsProps) {

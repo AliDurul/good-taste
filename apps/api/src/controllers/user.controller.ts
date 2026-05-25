@@ -5,33 +5,41 @@ import { auth } from "../lib/auth";
 import { fromNodeHeaders } from "better-auth/node";
 import { prisma } from "../lib/prisma";
 import { generateReferralCode } from "../lib/utils";
+import type { UserWhereInput, UserOrderByWithRelationInput } from "../../generated/prisma/models";
 
 
 export const listUsers = async (req: Request, res: Response) => {
     const query = req.query as Record<string, string | undefined>;
     const { page, limit, skip } = req.pagination;
 
-    const result = await auth.api.listUsers({
-        query: {
-            limit,
-            offset: skip,
-            searchValue: query.searchValue,
-            searchField: query.searchField as "email" | "name" | undefined,
-            searchOperator: query.searchOperator as "contains" | "starts_with" | "ends_with" | undefined,
-            filterField: query.filterField,
-            filterValue: query.filterValue,
-            sortBy: query.sortBy,
-            sortDirection: query.sortDirection as "asc" | "desc" | undefined,
-        },
-        headers: fromNodeHeaders(req.headers),
-    });
+    const where: UserWhereInput = {
+        name: query.search ? { contains: query.search, mode: "insensitive" as const } : undefined,
+        ...(query.roles && { role: { in: query.roles.split(",").filter(Boolean) } }),
+    };
 
-    const totalCount = result.total;
+    const orderBy: UserOrderByWithRelationInput = query.sortBy
+        ? { [query.sortBy]: query.sortDirection === "asc" ? "asc" : "desc" }
+        : { createdAt: "desc" };
+
+    const [users, totalCount] = await Promise.all([
+        prisma.user.findMany({
+            where,
+            orderBy,
+            skip,
+            take: limit,
+            include: {
+                assignedAgent: { select: { id: true, name: true } },
+                tier: { select: { id: true, name: true } },
+            }
+        }),
+        prisma.user.count({ where }),
+    ]);
+
     const totalPages = Math.ceil(totalCount / limit);
 
     res.status(200).send({
         success: true,
-        data: result.users,
+        data: users,
         pagination: {
             page,
             limit,
@@ -44,14 +52,13 @@ export const listUsers = async (req: Request, res: Response) => {
 };
 
 export const createUser: RequestHandler = async (req, res) => {
-    const { email, password, name, role, phone, address, city, country, birthday, assignedAgentId } = req.body;
+    const { email, password, name, role, image, phone, address, city, country, birthday, assignedAgentId } = req.body;
 
     const isAdminCreating = req.user?.role === "admin";
     const effectiveRole = isAdminCreating ? (role ?? "customer") : "customer";
 
     // If the creator is an agent, bind this customer to them regardless of body
-    const effectiveAgentId: string | undefined =
-        req.user?.role === "agent" ? req.user.id : assignedAgentId;
+    const effectiveAgentId: string | undefined = req.user?.role === "agent" ? req.user.id : assignedAgentId;
 
 
     interface CreateUserResult {
@@ -66,6 +73,7 @@ export const createUser: RequestHandler = async (req, res) => {
             name,
             role: effectiveRole,
             data: {
+                image,
                 phone,
                 address,
                 city,
@@ -107,13 +115,10 @@ export const createUser: RequestHandler = async (req, res) => {
 export const getUser: RequestHandler = async (req, res) => {
     const { id } = req.params as { id: string };
 
-    const user = await auth.api.getUser({
-        query: { id },
-        headers: fromNodeHeaders(req.headers),
-    });
+    const user = await prisma.user.findUnique({ where: { id } });
 
     if (!user) {
-        throw new CustomError('User not found', 404, true);
+        throw new CustomError("User not found", 404, true);
     }
 
     res.status(200).send({ success: true, data: user });
@@ -122,13 +127,14 @@ export const getUser: RequestHandler = async (req, res) => {
 export const updateUser: RequestHandler = async (req, res) => {
     const { id } = req.params;
 
-    const updateData = req.validatedBody;
-    const updated = await auth.api.adminUpdateUser({
-        body: {
-            userId: id,
-            data: updateData,
+    const { birthday, ...rest } = req.validatedBody;
+
+    const updated = await prisma.user.update({
+        where: { id },
+        data: {
+            ...rest,
+            ...(birthday && { birthday: new Date(birthday) }),
         },
-        headers: fromNodeHeaders(req.headers),
     });
 
     res.status(200).send({ success: true, data: updated });

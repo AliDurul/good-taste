@@ -1,7 +1,7 @@
 import { RequestHandler } from "express";
 import { prisma } from "../lib/prisma";
 import { CustomError } from "../lib/common";
-import { ProductOrderByWithRelationInput, ProductWhereInput } from "../../generated/prisma/models";
+import { ProductInclude, ProductOrderByWithRelationInput, ProductWhereInput } from "../../generated/prisma/models";
 
 export const listProducts: RequestHandler = async (req, res) => {
     const query = req.query as Record<string, string | undefined>;
@@ -12,7 +12,9 @@ export const listProducts: RequestHandler = async (req, res) => {
         name: query.search ? { contains: query.search, mode: "insensitive" as const } : undefined,
     };
 
-    const orderBy: ProductOrderByWithRelationInput = query.sortBy ? { [query.sortBy]: query.sortDirection === "desc" ? "desc" : "asc" } : { createdAt: "desc" };
+    const orderBy: ProductOrderByWithRelationInput = query.sortBy
+        ? { [query.sortBy]: query.sortDirection === "desc" ? "desc" : "asc" }
+        : { createdAt: "desc" };
 
     const [products, totalCount] = await Promise.all([
         prisma.product.findMany({
@@ -22,7 +24,12 @@ export const listProducts: RequestHandler = async (req, res) => {
             orderBy,
             include: {
                 variants: true,
-                category: true,
+                category: {
+                    select: {
+                        id: true,
+                        name: true,
+                    }
+                },
             }
         }),
         prisma.product.count({ where }),
@@ -47,7 +54,18 @@ export const listProducts: RequestHandler = async (req, res) => {
 export const getProduct: RequestHandler = async (req, res) => {
     const { id } = req.params as { id: string };
 
-    const product = await prisma.product.findUnique({ where: { id } });
+    const product = await prisma.product.findUnique({
+        where: { id },
+        include: {
+            variants: true,
+            category: {
+                select: {
+                    id: true,
+                    name: true,
+                },
+            },
+        },
+    });
 
     if (!product) {
         throw new CustomError('Product not found', 404, true);
@@ -63,17 +81,19 @@ export const createProduct: RequestHandler = async (req, res) => {
     const product = await prisma.product.create({
         data: {
             ...productData,
-            variants: {
-                create: variants.map((variant: any) => ({
-                    weightKg: variant.weightKg,
-                    weightLabel: variant.weightLabel,
-                    price: variant.price,
-                    earnValue: variant.earnValue,
-                    images: variant.images,
-                    stockQty: variant.stockQty,
-                    lowStockThreshold: variant.lowStockThreshold,
-                }))
-            },
+            ...(variants?.length ? {
+                variants: {
+                    create: variants.map((variant: any) => ({
+                        weightKg: variant.weightKg,
+                        weightLabel: variant.weightLabel,
+                        price: variant.price,
+                        earnValue: variant.earnValue,
+                        image: variant.image,
+                        stockQty: variant.stockQty,
+                        lowStockThreshold: variant.lowStockThreshold,
+                    }))
+                }
+            } : {}),
         },
 
         include: {
@@ -91,7 +111,7 @@ export const updateProduct: RequestHandler = async (req, res) => {
 
     const product = await prisma.product.update({
         where: { id },
-        data: req.validatedBody
+        data: req.body
     });
 
     res.status(200).send({ success: true, data: product });

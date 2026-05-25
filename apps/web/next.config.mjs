@@ -10,6 +10,18 @@ const nextConfig = {
         port: '',
         pathname: '/**',
       },
+      {
+        protocol: 'https',
+        hostname: '8ucle32btw.ufs.sh',
+        port: '',
+        pathname: '/f/**',
+      },
+      {
+        protocol: 'http',
+        hostname: 'localhost',
+        port: '8000',
+        pathname: '/uploads/**',
+      },
     ],
   },
   transpilePackages: ["@workspace/ui"],

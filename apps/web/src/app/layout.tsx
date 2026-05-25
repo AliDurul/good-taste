@@ -5,6 +5,9 @@ import { ThemeProvider } from "@/components/theme-provider"
 import { cn } from "@workspace/ui/lib/utils";
 import { Toaster } from "@workspace/ui/components/sonner";
 import { TooltipProvider } from "@workspace/ui/components/tooltip";
+import { NextSSRPlugin } from "@uploadthing/react/next-ssr-plugin";
+import { extractRouterConfig } from "uploadthing/server";
+import { ourFileRouter } from "./api/uploadthing/core";
 
 const robotoSlab = Roboto_Slab({ subsets: ['latin'], variable: '--font-serif' });
 
@@ -30,6 +33,7 @@ export default function RootLayout({
       className={cn("antialiased", fontSans.variable, fontMono.variable, "font-serif", robotoSlab.variable)}
     >
       <body>
+        {/* <NextSSRPlugin routerConfig={extractRouterConfig(ourFileRouter)} /> */}
         <ThemeProvider>
           <TooltipProvider>{children}</TooltipProvider>
         </ThemeProvider>

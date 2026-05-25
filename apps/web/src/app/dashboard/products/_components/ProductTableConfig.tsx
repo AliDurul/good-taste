@@ -23,6 +23,8 @@ import { Switch } from '@workspace/ui/components/switch'
 import { DataTableColumnHeader } from '@/components/table/data-table-column-header'
 import { DeleteDialog } from '@/components/DeleteDialog'
 import { IProduct } from '@workspace/schemas'
+import Image from 'next/image'
+import { deleteProduct } from '@/actions/mutations'
 
 
 
@@ -57,10 +59,9 @@ import { IProduct } from '@workspace/schemas'
 
 // }
 
-function RowActions({ user }: { user: IProduct }) {
+function RowActions({ product }: { product: IProduct }) {
     const [menuOpen, setMenuOpen] = useState(false)
     const [deleteOpen, setDeleteOpen] = useState(false)
-    // const { data: activeOrg } = useActiveOrganization()
 
     return (
         <>
@@ -77,12 +78,12 @@ function RowActions({ user }: { user: IProduct }) {
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-40">
                     <DropdownMenuItem asChild >
-                        <Link href={`/products/${user.id}/edit`}>
+                        <Link href={`/dashboard/products/${product.id}/edit`}>
                             Edit
                         </Link>
                     </DropdownMenuItem>
                     <DropdownMenuItem asChild>
-                        <Link href={`/products/${user.id}`}>
+                        <Link href={`/dashboard/products/${product.id}`}>
                             View Details
                         </Link>
                     </DropdownMenuItem>
@@ -101,13 +102,13 @@ function RowActions({ user }: { user: IProduct }) {
                 </DropdownMenuContent>
             </DropdownMenu>
 
-            {/* {
-                deleteOpen && <DeleteDialog
-                    open={deleteOpen}
-                    onOpenChange={setDeleteOpen}
-                    onConfirm={async () => await deleteUser(user.id)}
-                />
-            } */}
+            {deleteOpen && <DeleteDialog
+                open={deleteOpen}
+                onOpenChange={setDeleteOpen}
+                title="Delete product?"
+                description={`"${product.name}" will be permanently removed along with all its variants. This action cannot be undone.`}
+                onConfirm={() => deleteProduct(product.id)}
+            />}
 
         </>
     )
@@ -118,6 +119,17 @@ export const Columns: ColumnDef<IProduct>[] = [
         id: 'row-no',
         header: '#',
         cell: ({ row }) => <div>{row.index + 1}</div>,
+    },
+    {
+        accessorKey: "image",
+        header: ({ column }) => <DataTableColumnHeader column={column} title="Image" isSorted={column.getIsSorted()} />,
+        cell: ({ row }) => {
+            const imageUrl = row.getValue<string>("image")
+            return imageUrl
+                ? <Image src={imageUrl ?? ''} width={200} height={200} alt="Product Image" className="w-10 h-10 rounded object-cover" />
+                : <div className="w-10 h-10 rounded bg-muted" />
+        },
+        enableSorting: false,
     },
     {
         accessorKey: "name",
@@ -156,8 +168,8 @@ export const Columns: ColumnDef<IProduct>[] = [
     {
         id: "actions",
         cell: ({ row }) => {
-            const user = row.original;
-            return <RowActions user={user} />
+            const product = row.original;
+            return <RowActions product={product} />
         },
     },
 ]
@@ -165,7 +177,7 @@ export const Columns: ColumnDef<IProduct>[] = [
 export const toolbarAction = () => {
     return (
         <div className='flex gap-3 '>
-            <Link href={'/products/new'} className='w-full'>
+            <Link href={'/dashboard/products/new'} className='w-full'>
                 <Button className='w-full'>
                     <Plus className="size-3" />
                     Add New Product

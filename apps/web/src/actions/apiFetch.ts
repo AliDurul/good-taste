@@ -16,7 +16,7 @@ export async function getSessionToken(): Promise<string | undefined> {
     return cookieStore.get('__Secure-goodtaste.session_token')?.value
 }
 
-export async function apiFetch<T>(endpoint: string, sessionToken: string | undefined, options?: ApiFetchOptions): Promise<T> {
+export async function apiFetch<T>(endpoint: string, sessionToken: string | undefined, options?: ApiFetchOptions): Promise<{success: boolean} & T> {
     const { params, ...fetchOptions } = options ?? {}
 
     const query = params
@@ -41,7 +41,11 @@ export async function apiFetch<T>(endpoint: string, sessionToken: string | undef
         throw new ApiError(error.message || "API Error", res.status)
     }
 
-    return res.json() as Promise<T>
+    if (res.status === 204) {
+        return { success: true } as { success: boolean } & T
+    }
+
+    return res.json() as Promise<{success: boolean} & T>
 }
 
 

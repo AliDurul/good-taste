@@ -1,11 +1,10 @@
 // lib/nav.tsx
 import { TerminalSquareIcon, BotIcon, Settings2Icon } from "lucide-react"
 
-export const navMain = [
+const navConfig = [
   {
     title: "Dashboard",
-    url: "#",
-    icon: <TerminalSquareIcon />,
+    icon: TerminalSquareIcon,
     isActive: true,
     roles: ["admin", "officer", "agent"],   // everyone
     items: [
@@ -15,14 +14,22 @@ export const navMain = [
     ],
   },
   {
-    title: "Stock",
-    url: "#",
-    icon: <BotIcon />,
+    title: "Stocks",
+    icon: BotIcon,
     roles: ["admin", "officer"],
     items: [
       { title: "Products", url: "/dashboard/products", roles: ["admin", "officer"] },
       { title: "Product variants", url: "/dashboard/products/variants", roles: ["admin", "officer"] },
       { title: "Product Categories", url: "/dashboard/products/categories", roles: ["admin"] },
+    ],
+  },
+  {
+    title: "Users",
+    icon: BotIcon,
+    roles: ["admin"],
+    items: [
+      { title: "User List", url: "/dashboard/users", roles: ["admin"] },
+      { title: "Create User", url: "/dashboard/users/new", roles: ["admin"] },
     ],
   },
   // {
@@ -38,12 +45,14 @@ export const navMain = [
   // },
   {
     title: "Settings",
-    url: "#",
-    icon: <Settings2Icon />,
-    roles: ["admin"],                      // admin only
+    url: "/dashboard/settings",
+    icon: Settings2Icon,
+    roles: ["admin"],
     items: [
       { title: "Wallet Config", url: "/dashboard/settings/wallet-config", roles: ["admin"] },
       { title: "Loyalty Tiers", url: "/dashboard/settings/loyalty-tiers", roles: ["admin"] },
     ],
   },
 ]
+
+export default navConfig

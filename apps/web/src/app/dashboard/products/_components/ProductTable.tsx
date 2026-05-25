@@ -6,7 +6,7 @@ import React, { useTransition } from 'react'
 import { Columns, toolbarAction } from './ProductTableConfig'
 import { IProduct, PaginatedResponse } from '@workspace/schemas'
 
-export default function ProductTable({result}: {result: PaginatedResponse<IProduct>}) {
+export default function ProductTable({ result }: { result: PaginatedResponse<IProduct> }) {
     const { updateUrlParams } = useUrlParams()
     const [isPending, startTransition] = useTransition()
     return (
@@ -14,7 +14,7 @@ export default function ProductTable({result}: {result: PaginatedResponse<IProdu
             <DataTable
                 columns={Columns}
                 data={result?.data || []}
-                initialColumnVisibility={{  }}
+                initialColumnVisibility={{ image: false }}
                 filterPlaceholder="Search by product name..."
                 renderToolbarActions={toolbarAction}
                 apiPagination={result?.pagination}

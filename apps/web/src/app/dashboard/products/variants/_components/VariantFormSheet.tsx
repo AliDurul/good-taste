@@ -3,7 +3,7 @@
 import { useEffect, useTransition } from 'react'
 import { Controller, useForm, type Resolver } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { variantCreateSchema, type VariantCreate, type IProductVariantWithProduct } from '@workspace/schemas'
+import { variantCreateSchema, type VariantCreate, type IProductVariant } from '@workspace/schemas'
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetFooter } from '@workspace/ui/components/sheet'
 import { Button } from '@workspace/ui/components/button'
 import { Input } from '@workspace/ui/components/input'
@@ -18,7 +18,7 @@ interface VariantFormSheetProps {
     /** Pre-fill productId when creating a new variant from a product group */
     productId?: string
     /** Pass existing variant to switch form into edit mode */
-    variant?: IProductVariantWithProduct
+    variant?: IProductVariant
 }
 
 export function VariantFormSheet({ open, onOpenChange, productId, variant }: VariantFormSheetProps) {
@@ -33,7 +33,7 @@ export function VariantFormSheet({ open, onOpenChange, productId, variant }: Var
             weightLabel: '',
             price: 0,
             earnValue: 0,
-            images: [],
+            image: '',
             stockQty: 0,
             lowStockThreshold: 0,
             isActive: true,
@@ -48,7 +48,7 @@ export function VariantFormSheet({ open, onOpenChange, productId, variant }: Var
                 weightLabel: variant.weightLabel,
                 price: variant.price,
                 earnValue: variant.earnValue,
-                images: variant.images,
+                image: variant.image,
                 stockQty: variant.stockQty,
                 lowStockThreshold: variant.lowStockThreshold,
                 isActive: variant.isActive,
@@ -60,7 +60,7 @@ export function VariantFormSheet({ open, onOpenChange, productId, variant }: Var
                 weightLabel: '',
                 price: 0,
                 earnValue: 0,
-                images: [],
+                image: '',
                 stockQty: 0,
                 lowStockThreshold: 0,
                 isActive: true,

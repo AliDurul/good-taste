@@ -21,34 +21,22 @@ const loyaltyTiers = [
         "name": "Bronze",
         "minSpend": 0,
         "maxSpend": 499.99,
-        "color": "#cd7f32"
+        "color": "#cd7f32",
+        "benefits": ["Earn 1% back on all purchases"]
     },
     {
         "name": "Silver",
         "minSpend": 500,
         "maxSpend": 1999.99,
-        "color": "#c0c0c0"
+        "color": "#c0c0c0",
+        "benefits": ["Earn 1.5% back on all purchases", "Early access to sales"]
     },
     {
         "name": "Gold",
         "minSpend": 2000,
         "maxSpend": null,
-        "color": "#ffd700"
-    }
-]
-
-const tierBenefits = [
-    {
-        "tierId": "d83f35bb-33c7-493c-a6bd-8fd171f16d5a",
-        "description": "Earn 1% back on all purchases"
-    },
-    {
-        "tierId": "8195e761-46c8-4b1c-a80a-3d9d58194808",
-        "description": "Earn 1.5% back on all purchases + early access to sales"
-    },
-    {
-        "tierId": "15452086-58c4-4ab6-aaa6-be035fc18ec9",
-        "description": "Earn 2% back on all purchases + early access to sales + exclusive offers"
+        "color": "#ffd700",
+        "benefits": ["Earn 2% back on all purchases", "Early access to sales", "Exclusive offers"]
     }
 ]
 

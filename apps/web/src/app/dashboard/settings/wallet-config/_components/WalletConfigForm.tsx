@@ -1,6 +1,7 @@
 'use client'
 
 import type { ReactNode } from 'react'
+import { useState } from 'react'
 import { Controller, useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import {
@@ -11,8 +12,9 @@ import {
 import { Button } from '@workspace/ui/components/button'
 import { Input } from '@workspace/ui/components/input'
 import { Separator } from '@workspace/ui/components/separator'
-import { SaveIcon } from 'lucide-react'
+import { PencilIcon, SaveIcon, XIcon } from 'lucide-react'
 import { toast } from 'sonner'
+import { updateWalletConfig } from '@/actions/mutations'
 
 // ─── Setting Row ──────────────────────────────────────────────────────────────
 
@@ -44,9 +46,12 @@ function SettingRow({
 // ─── Form ─────────────────────────────────────────────────────────────────────
 
 export function WalletConfigForm({ config }: { config: IWalletConfig }) {
+    const [isEditing, setIsEditing] = useState(false)
+
     const {
         control,
         handleSubmit,
+        reset,
         formState: { isSubmitting },
     } = useForm<WalletConfigUpdate>({
         resolver: zodResolver(walletConfigUpdateSchema),
@@ -58,11 +63,22 @@ export function WalletConfigForm({ config }: { config: IWalletConfig }) {
         },
     })
 
-    async function onSubmit(_data: WalletConfigUpdate) {
-        // TODO: implement updateWalletConfig action
-        toast.success('Configuration saved')
+    async function onSubmit(data: WalletConfigUpdate) {
+        const result = await updateWalletConfig(config.id, data)
+        if (result.success) {
+            toast.success(result.message)
+            setIsEditing(false)
+        } else {
+            toast.error(result.message)
+        }
     }
 
+    function handleCancel() {
+        reset()
+        setIsEditing(false)
+    }
+
+    const isDisabled = !isEditing || isSubmitting
     const updatedAt = new Date(config.updatedAt).toLocaleString()
 
     return (
@@ -91,7 +107,7 @@ export function WalletConfigForm({ config }: { config: IWalletConfig }) {
                             max="1"
                             value={field.value}
                             onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
-                            disabled={isSubmitting}
+                            disabled={isDisabled}
                             aria-invalid={fieldState.invalid}
                         />
                     </SettingRow>
@@ -114,7 +130,7 @@ export function WalletConfigForm({ config }: { config: IWalletConfig }) {
                             min="1"
                             value={field.value}
                             onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
-                            disabled={isSubmitting}
+                            disabled={isDisabled}
                             aria-invalid={fieldState.invalid}
                         />
                     </SettingRow>
@@ -145,7 +161,7 @@ export function WalletConfigForm({ config }: { config: IWalletConfig }) {
                             min="0"
                             value={field.value}
                             onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
-                            disabled={isSubmitting}
+                            disabled={isDisabled}
                             aria-invalid={fieldState.invalid}
                         />
                     </SettingRow>
@@ -168,7 +184,7 @@ export function WalletConfigForm({ config }: { config: IWalletConfig }) {
                             min="0"
                             value={field.value}
                             onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
-                            disabled={isSubmitting}
+                            disabled={isDisabled}
                             aria-invalid={fieldState.invalid}
                         />
                     </SettingRow>
@@ -178,10 +194,25 @@ export function WalletConfigForm({ config }: { config: IWalletConfig }) {
             {/* ── Footer ── */}
             <div className="flex items-center justify-between pt-6">
                 <p className="text-xs text-muted-foreground">Last updated: {updatedAt}</p>
-                <Button type="submit" disabled={isSubmitting}>
-                    <SaveIcon className="mr-2 h-4 w-4" />
-                    {isSubmitting ? 'Saving…' : 'Save Changes'}
-                </Button>
+                <div className="flex gap-2">
+                    {isEditing ? (
+                        <>
+                            <Button type="button" variant="outline" onClick={handleCancel} disabled={isSubmitting}>
+                                <XIcon className="mr-2 h-4 w-4" />
+                                Cancel
+                            </Button>
+                            <Button type="submit" disabled={isSubmitting}>
+                                <SaveIcon className="mr-2 h-4 w-4" />
+                                {isSubmitting ? 'Saving…' : 'Save Changes'}
+                            </Button>
+                        </>
+                    ) : (
+                        <Button type="button" onClick={() => setIsEditing(true)}>
+                            <PencilIcon className="mr-2 h-4 w-4" />
+                            Edit
+                        </Button>
+                    )}
+                </div>
             </div>
         </form>
     )

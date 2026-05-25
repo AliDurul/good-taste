@@ -64,7 +64,7 @@ enum PromotionType {
 // =============================================================================
 
 model User {
-  id            String   @id // Better Auth manages ID generation
+  id            String   @id @default(uuid()) // Better Auth manages ID generation; DB default is a fallback
   name          String
   email         String   @unique
   emailVerified Boolean  @default(false)
@@ -122,7 +122,7 @@ model User {
 }
 
 model Session {
-  id        String   @id
+  id        String   @id @default(uuid())
   expiresAt DateTime
   token     String   @unique
   createdAt DateTime @default(now())
@@ -139,7 +139,7 @@ model Session {
 }
 
 model Account {
-  id                    String    @id
+  id                    String    @id @default(uuid())
   accountId             String
   providerId            String
   userId                String
@@ -159,7 +159,7 @@ model Account {
 }
 
 model Verification {
-  id         String   @id
+  id         String   @id @default(uuid())
   identifier String
   value      String
   expiresAt  DateTime
@@ -190,11 +190,11 @@ model Category {
 }
 
 model Product {
-  id          String   @id @default(uuid())
+  id          String  @id @default(uuid())
   name        String // breakfast, roller meal
   description String?
-  isActive    Boolean  @default(true)
-  images      String[]
+  isActive    Boolean @default(true)
+  image       String?
 
   categoryId String
   category   Category @relation(fields: [categoryId], references: [id])
@@ -224,7 +224,7 @@ model ProductVariant {
   // Tip: recalculate earnValue in your API whenever price is updated
 
   // Variant-level images (photo of the actual 25kg bag)
-  images String[] // Cloudflare URLs
+  image String? // Cloudflare URLs
 
   // Stock management (per variant)
   stockQty          Int       @default(0)
@@ -382,7 +382,7 @@ model LoyaltyTier {
   earnMultiplier Float    @default(1.0)
   color          String? // hex color for UI badge
 
-  benefits          TierBenefit[]
+  benefits          String[]
   users             User[]
   fromTierHistories TierHistory[]         @relation("FromTier")
   toTierHistories   TierHistory[]         @relation("ToTier")
@@ -394,24 +394,14 @@ model LoyaltyTier {
   @@map("loyalty_tier")
 }
 
-model TierBenefit {
-  id          String      @id @default(uuid())
-  tierId      String
-  tier        LoyaltyTier @relation(fields: [tierId], references: [id], onDelete: Cascade)
-  description String
-
-  @@index([tierId])
-  @@map("tier_benefit")
-}
-
 model TierHistory {
   id         String           @id @default(uuid())
   customerId String
   customer   User             @relation(fields: [customerId], references: [id])
   fromTierId String?
   fromTier   LoyaltyTier?     @relation("FromTier", fields: [fromTierId], references: [id])
-  toTierId   String
-  toTier     LoyaltyTier      @relation("ToTier", fields: [toTierId], references: [id])
+  toTierId   String?
+  toTier     LoyaltyTier?     @relation("ToTier", fields: [toTierId], references: [id], onDelete: SetNull)
   reason     TierChangeReason
   changedAt  DateTime         @default(now())
 

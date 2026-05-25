@@ -28,7 +28,7 @@ export const productCreateSchema = z
         name: z.string().min(1),
         description: z.string().optional(),
         // price: z.number().positive(),
-        images: z.array(z.string().url()),
+        image: z.string().url().optional(),
         isActive: z.boolean().default(true),
         // pointsValue: z.number().int().positive(),
         // stockQty: z.number().int().nonnegative().default(0),
@@ -45,7 +45,7 @@ export const productUpdateSchema = z
         name: z.string().min(1).optional(),
         description: z.string().optional(),
         price: z.number().positive().optional(),
-        images: z.array(z.string().url()).optional(),
+        image: z.string().url().optional(),
         isActive: z.boolean().optional(),
         pointsValue: z.number().int().positive().optional(),
         stockQty: z.number().int().nonnegative().optional(),
@@ -62,7 +62,7 @@ export interface IProduct {
     name: string;
     description?: string;
     isActive: boolean;
-    images: string[];
+    image?: string;
     categoryId: string;
     createdAt: Date;
     updatedAt: Date;
@@ -87,7 +87,7 @@ export interface IProductVariant {
     weightLabel: string;
     price: number;
     earnValue: number;
-    images: string[];
+    image?: string;
     stockQty: number;
     lowStockThreshold: number;
     isOutOfStock: boolean;
@@ -108,7 +108,7 @@ export const variantCreateSchema = z
         weightLabel: z.string().min(1),
         price: z.number().positive(),
         earnValue: z.number().nonnegative(),
-        images: z.array(z.string().url()).default([]),
+        image: z.string().url().optional(),
         stockQty: z.number().int().nonnegative().default(0),
         lowStockThreshold: z.number().int().nonnegative().default(0),
         isActive: z.boolean().default(true),
@@ -120,3 +120,29 @@ export type VariantCreate = z.infer<typeof variantCreateSchema>;
 export const variantUpdateSchema = variantCreateSchema.partial();
 
 export type VariantUpdate = z.infer<typeof variantUpdateSchema>;
+
+// ─── Form-specific schemas (product + variants creation) ─────────────────────
+
+export const variantFormItemSchema = z.object({
+    id: z.string().uuid().optional(),
+    weightLabel: z.string().min(1, 'Weight label is required'),
+    weightKg: z.number({ invalid_type_error: 'Enter a valid weight' }).positive('Weight must be greater than 0'),
+    price: z.number({ invalid_type_error: 'Enter a valid price' }).positive('Price must be greater than 0'),
+    earnValue: z.number({ invalid_type_error: 'Enter a valid earn value' }).nonnegative(),
+    stockQty: z.number().int().nonnegative().default(0),
+    lowStockThreshold: z.number().int().nonnegative().default(0),
+    isActive: z.boolean().default(true),
+});
+
+export type VariantFormItem = z.infer<typeof variantFormItemSchema>;
+
+export const productWithVariantsCreateSchema = z.object({
+    name: z.string().min(1, 'Product name is required'),
+    description: z.string().optional(),
+    categoryId: z.string().uuid('Please select a category'),
+    isActive: z.boolean().default(true),
+    image: z.string().optional(),
+    variants: z.array(variantFormItemSchema).default([]),
+});
+
+export type ProductWithVariantsCreate = z.infer<typeof productWithVariantsCreateSchema>;

@@ -3,20 +3,6 @@
 
 ### BETTER AUTH
 
-# @name BetterAuth
-GET {{baseurl}}/auth/reference
-# Authorization: Bearer {{token}}
-
-
-###
-
-# @name currentSession
-GET {{baseurl}}/auth/session/list
-Authorization: Bearer {{token}}
-
-
-###
-
 # @name signUpBetterAuth
 POST {{baseurl}}/auth/sign-up/email
 Content-Type: application/json
@@ -36,8 +22,8 @@ POST {{baseurl}}/auth/sign-in/email
 Content-Type: application/json
 
 {
-  "email": "agent1@test.com",
-  "password": "pass1234"
+  "email": "admin@test.com",
+  "password": "admin1234"
 }
 ### 
 
@@ -174,28 +160,28 @@ Authorization: Bearer {{token}}
 
 ###
 
+# @name productUpdate
+put {{baseurl}}/products/c02d2ed9-433a-44e7-b414-e03d0de3d996
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+    "name": "test"
+}
+
+###
+
 # @name productCreate
 POST {{baseurl}}/products
 Authorization: Bearer {{token}}
 Content-Type: application/json
 
 {
-        "name": "Super Roller",
-        "description": "Super Roller",
-        "images": ["https://example.com/images/productroller12_5.jpg"],
-        "isActive": true,
-        "categoryId": "737b2989-5e04-48d8-9506-a98666eb427f",
-        "variants": [
-            {
-                "weightKg": 25,
-                "weightLabel": "25kg",
-                "price": 300.00,
-                "earnValue": 3.00,
-                "images": ["https://cdn.cloudflare.com/variants/breakfastzns-25kg.jpg"],
-                "stockQty": 0,
-                "lowStockThreshold": 30
-            }
-        ]
+    "name": "Super Roller",
+    "description": "Super Roller",
+    "image": "https://example.com/images/productroller12_5.jpg",
+    "isActive": true,
+    "categoryId": "737b2989-5e04-48d8-9506-a98666eb427f"
 }
 
 

@@ -2,6 +2,9 @@ import { NextFunction, RequestHandler, Response, Request } from "express";
 import { CustomError } from "../lib/common";
 import { z } from 'zod';
 import { APIError } from "better-auth/api";
+import multer from "multer";
+import fs from "fs";
+import { PrismaClientValidationError } from "../../generated/prisma/internal/prismaNamespace";
 
 // 404 NOT FOUND MIDDLEWARE
 export const notFound: RequestHandler = (req, res, next) => {
@@ -28,9 +31,23 @@ export async function errorHandler(err: unknown, req: Request, res: Response, ne
         message = err.message || "Authentication error";
         isOperational = true;
         stack = err.stack;
+    } else if (err instanceof PrismaClientValidationError) {
+        statusCode = 400;
+        message = "Prisma validation error: Invalid input data";
+        isOperational = true;
+        stack = err.stack;
     } else if (err instanceof Error) {
         message = err.message;
         stack = err.stack;
+    }
+
+    // Remove uploaded file if present (in case of error after upload)
+    if (req.file && req.file.path) {
+        fs.unlink(req.file.path, (unlinkErr) => {
+            if (unlinkErr) {
+                console.error("Failed to remove uploaded file after error:", unlinkErr);
+            }
+        });
     }
 
     if (!isOperational) {
@@ -63,6 +80,14 @@ export const validate = (schema: z.ZodSchema) => (req: Request, res: Response, n
         req.validatedBody = validatedData;
         next();
     } catch (error) {
+        // Remove uploaded file if validation fails
+        if (req.file && req.file.path) {
+            fs.unlink(req.file.path, (unlinkErr) => {
+                if (unlinkErr) {
+                    console.error("Failed to remove uploaded file after validation error:", unlinkErr);
+                }
+            });
+        }
         if (error instanceof z.ZodError) {
             // Return structured error response
             return res.status(400).json({
@@ -77,3 +102,16 @@ export const validate = (schema: z.ZodSchema) => (req: Request, res: Response, n
         next(error);
     }
 };
+
+// MULTER
+const storage = multer.diskStorage({
+    destination: (req, file, cb) => {
+        cb(null, 'uploads/');
+    },
+    filename: (req, file, cb) => {
+        const uniqueSuffix = Date.now() + Math.round(Math.random() * 1E4);
+        cb(null, uniqueSuffix + '-' + file.originalname);
+    }
+})
+
+export const upload = multer({ storage });

@@ -15,15 +15,16 @@ import {
   SidebarMenuSubButton,
   SidebarMenuSubItem,
 } from "@workspace/ui/components/sidebar"
-import { ChevronRightIcon } from "lucide-react";
+import { ChevronRightIcon, LucideProps } from "lucide-react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
+import { ForwardRefExoticComponent, RefAttributes } from "react";
 
 interface NavMainProps {
   items: {
     title: string
-    url: string
-    icon?: React.ReactNode
+    url?: string
+    icon?: ForwardRefExoticComponent<Omit<LucideProps, "ref"> & RefAttributes<SVGSVGElement>>;
     isActive?: boolean
     items?: {
       title: string
@@ -34,6 +35,7 @@ interface NavMainProps {
 
 export function NavMain({ items, }: NavMainProps) {
   const pathname = usePathname();
+  const router = useRouter();
 
   return (
     <SidebarGroup>
@@ -49,8 +51,11 @@ export function NavMain({ items, }: NavMainProps) {
             >
               <SidebarMenuItem>
                 <CollapsibleTrigger asChild>
-                  <SidebarMenuButton tooltip={item.title} >
-                    {item.icon}
+                  <SidebarMenuButton
+                    tooltip={item.title}
+                    // onClick={() => item.url && router.push(item.url)}
+                  >
+                    {item.icon && <item.icon />}
                     <span>{item.title}</span>
                     <ChevronRightIcon className="ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
                   </SidebarMenuButton>
@@ -73,8 +78,8 @@ export function NavMain({ items, }: NavMainProps) {
           ) : (
             <SidebarMenuItem key={item.title}>
               <SidebarMenuButton tooltip={item.title} asChild isActive={pathname === item.url}>
-                <Link href={item.url}>
-                  {item.icon}
+                <Link href={item.url || "#"}>
+                  {item.icon && <item.icon />}
                   <span>{item.title}</span>
                 </Link>
               </SidebarMenuButton>

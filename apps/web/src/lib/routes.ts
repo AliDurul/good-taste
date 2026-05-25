@@ -1,5 +1,5 @@
 
-export const publicRoutes = ["/reset-password", "/verify-email", "/opengraph-image", "/icon", "/apple-icon", "/favicon.ico", "/robots.txt", "/sitemap.xml", "/tenant-not-found"];
+export const publicRoutes = ["/", "/reset-password", "/verify-email", "/opengraph-image", "/icon", "/apple-icon", "/favicon.ico", "/robots.txt", "/sitemap.xml", "/tenant-not-found"];
 
 
 export const authRoutes = ["/login", "/register"];

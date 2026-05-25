@@ -24,46 +24,34 @@ import Link from "next/link"
 import { authClient } from "@/lib/auth-client"
 import { useFilteredNav } from "@/hooks/use-nav"
 
-const data = {
-  projects: [
-    {
-      name: "Design Engineering",
-      url: "#",
-      icon: (
-        <FrameIcon
-        />
-      ),
-    },
-    {
-      name: "Sales & Marketing",
-      url: "#",
-      icon: (
-        <PieChartIcon
-        />
-      ),
-    },
-    {
-      name: "Travel",
-      url: "#",
-      icon: (
-        <MapIcon
-        />
-      ),
-    },
-  ],
-  navSecondary: [
-    {
-      title: "Support",
-      url: "#",
-      icon: LifeBuoy,
-    },
-    {
-      title: "Feedback",
-      url: "#",
-      icon: Send,
-    },
-  ],
-}
+// const data = {
+//   projects: [
+//     {
+//       name: "Design Engineering",
+//       url: "#",
+//       icon: (
+//         <FrameIcon
+//         />
+//       ),
+//     },
+//     {
+//       name: "Sales & Marketing",
+//       url: "#",
+//       icon: (
+//         <PieChartIcon
+//         />
+//       ),
+//     },
+//     {
+//       name: "Travel",
+//       url: "#",
+//       icon: (
+//         <MapIcon
+//         />
+//       ),
+//     },
+//   ],
+// }
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { data: session } = authClient.useSession();
@@ -90,8 +78,8 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       </SidebarHeader>
       <SidebarContent>
         <NavMain items={nav} />
-        <NavProjects projects={data.projects} />
-        <NavSecondary items={data.navSecondary} className="mt-auto" />
+        {/* <NavProjects projects={data.projects} /> */}
+        <NavSecondary className="mt-auto" />
       </SidebarContent>
       <SidebarFooter>
         <NavUser />

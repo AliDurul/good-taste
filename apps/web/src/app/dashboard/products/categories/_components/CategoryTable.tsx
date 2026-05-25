@@ -3,7 +3,7 @@ import DataTable from '@/components/table/DataTable'
 import { useUrlParams } from '@/hooks/useUrlParams'
 import { cn } from '@workspace/ui/lib/utils'
 import React, { useTransition } from 'react'
-import { Columns, toolbarAction } from './CategoryTableConfig'
+import { Columns, CategoryToolbarActions } from './CategoryTableConfig'
 import {  IProductCategory, PaginatedResponse } from '@workspace/schemas'
 
 export default function CategoryTable({result}: {result: PaginatedResponse<IProductCategory>}) {
@@ -16,7 +16,7 @@ export default function CategoryTable({result}: {result: PaginatedResponse<IProd
                 data={result?.data || []}
                 initialColumnVisibility={{  }}
                 filterPlaceholder="Search by category name..."
-                renderToolbarActions={toolbarAction}
+                renderToolbarActions={CategoryToolbarActions}
                 apiPagination={result?.pagination}
                 onApiPageChange={(page) =>
                     startTransition(() => {

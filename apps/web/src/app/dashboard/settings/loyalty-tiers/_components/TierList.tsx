@@ -4,9 +4,15 @@ import { useState } from 'react'
 import type { ILoyaltyTier } from '@workspace/schemas'
 import { Button } from '@workspace/ui/components/button'
 import { Badge } from '@workspace/ui/components/badge'
+import {
+    Collapsible,
+    CollapsibleContent,
+    CollapsibleTrigger,
+} from '@workspace/ui/components/collapsible'
 import { DeleteDialog } from '@/components/DeleteDialog'
-import { PlusIcon, PencilIcon, Trash2Icon } from 'lucide-react'
+import { PlusIcon, PencilIcon, Trash2Icon, ChevronDownIcon } from 'lucide-react'
 import { TierFormDialog } from './TierFormDialog'
+import { deleteLoyaltyTier } from '@/actions/mutations'
 
 function formatSpendRange(minSpend: number, maxSpend: number | null): string {
     const min = `$${minSpend.toLocaleString()}`
@@ -36,8 +42,8 @@ export function TierList({ initialTiers }: { initialTiers: ILoyaltyTier[] }) {
     }
 
     async function handleDeleteConfirm() {
-        // TODO: implement deleteLoyaltyTier action
-        return { success: true, message: `"${deleteTarget?.name}" deleted` }
+        if (!deleteTarget) return { success: false, message: 'No tier selected.' }
+        return deleteLoyaltyTier(deleteTarget.id)
     }
 
     return (
@@ -86,7 +92,7 @@ export function TierList({ initialTiers }: { initialTiers: ILoyaltyTier[] }) {
                             className="flex flex-col overflow-hidden rounded-2xl bg-card shadow-sm ring-1 ring-foreground/5 dark:ring-foreground/10"
                         >
                             {/* Color stripe */}
-                            <div className="h-1.5 flex-shrink-0" style={{ background: tier.color }} />
+                            <div className="h-1.5 shrink-0" style={{ background: tier.color }} />
 
                             {/* Body */}
                             <div className="flex flex-1 flex-col gap-4 p-5">
@@ -94,14 +100,14 @@ export function TierList({ initialTiers }: { initialTiers: ILoyaltyTier[] }) {
                                 <div className="flex items-center justify-between gap-2">
                                     <div className="flex min-w-0 items-center gap-2">
                                         <div
-                                            className="h-3.5 w-3.5 flex-shrink-0 rounded-full ring-1 ring-black/10"
+                                            className="h-3.5 w-3.5 shrink-0 rounded-full ring-1 ring-black/10"
                                             style={{ background: tier.color }}
                                         />
                                         <span className="truncate text-base font-semibold">
                                             {tier.name}
                                         </span>
                                     </div>
-                                    <Badge variant="secondary" className="flex-shrink-0 tabular-nums">
+                                    <Badge variant="secondary" className="shrink-0 tabular-nums">
                                         {tier.earnMultiplier}× pts
                                     </Badge>
                                 </div>
@@ -115,6 +121,31 @@ export function TierList({ initialTiers }: { initialTiers: ILoyaltyTier[] }) {
                                         {formatSpendRange(tier.minSpend, tier.maxSpend)}
                                     </p>
                                 </div>
+
+                                {/* Benefits */}
+                                {tier.benefits && tier.benefits.length > 0 && (
+                                    <Collapsible>
+                                        <CollapsibleTrigger asChild>
+                                            <button className="flex w-full items-center justify-between text-xs font-medium uppercase tracking-wider text-muted-foreground hover:text-foreground transition-colors">
+                                                <span>Benefits</span>
+                                                <ChevronDownIcon className="h-3.5 w-3.5 transition-transform duration-200 in-data-[state=open]:rotate-180" />
+                                            </button>
+                                        </CollapsibleTrigger>
+                                        <CollapsibleContent className="overflow-hidden data-[state=closed]:animate-none">
+                                            <ul className="mt-1.5 space-y-1">
+                                                {tier.benefits.map((benefit, i) => (
+                                                    <li key={i} className="flex items-start gap-1.5 text-sm">
+                                                        <span
+                                                            className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full"
+                                                            style={{ background: tier.color }}
+                                                        />
+                                                        {benefit}
+                                                    </li>
+                                                ))}
+                                            </ul>
+                                        </CollapsibleContent>
+                                    </Collapsible>
+                                )}
 
                                 {/* Actions */}
                                 <div className="mt-auto flex items-center gap-1 border-t border-border pt-3">

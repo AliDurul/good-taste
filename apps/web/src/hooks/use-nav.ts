@@ -1,11 +1,11 @@
 // hooks/use-nav.ts
 import { useMemo } from "react"
-import { navMain } from "@/lib/nav"
+import navConfig from "@/lib/nav-config"
 import { hasAnyRole } from "@/lib/utils"
 
 export function useFilteredNav(roleString: string | undefined | null) {
   return useMemo(() => {
-    return navMain
+    return navConfig
       .filter((item) => hasAnyRole(roleString, item.roles))
       .map((item) => ({
         ...item,

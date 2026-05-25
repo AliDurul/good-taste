@@ -9,7 +9,7 @@ import variantRoutes from "./variant.route";
 import orderRoutes from "./order.route";
 import loyaltyTierRoutes from "./loyalty-tier.route";
 import walletConfigRoutes from "./wallet-config.route";
-import tierBenefitRoutes from "./tier-benefit.route";
+import { upload } from "../middlewares/common";
 
 const router: Router = Router();
 
@@ -28,9 +28,6 @@ router.use('/categories', authenticate, categoryRoutes);
 // loyalty tiers
 router.use('/loyalty-tiers', authenticate, loyaltyTierRoutes);
 
-// tier benefits
-router.use('/tier-benefits', authenticate, tierBenefitRoutes);
-
 // products
 router.use('/products', authenticate, productRoutes);
 
@@ -38,9 +35,20 @@ router.use('/products', authenticate, productRoutes);
 router.use('/variants', authenticate, variantRoutes);
 
 // users
-router.use('/users', authenticate, userRoutes);
+router.use('/users', authenticate, userRoutes); // ?
 
 // orders
-router.use('/orders', authenticate, orderRoutes);
+router.use('/orders', authenticate, orderRoutes); // ?
+
+
+// router.post('/upload', upload.single('image'), (req, res) => {
+//   if (!req.file) {
+//     return res.status(400).send('No file uploaded.');
+//   }
+//   res.send({
+//     message: 'Image uploaded successfully!',
+//     file: req.file // Contains metadata like path, filename, and size
+//   });
+// });
 
 export default router;

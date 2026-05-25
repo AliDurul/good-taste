@@ -30,6 +30,7 @@ export interface ILoyaltyTier {
     maxSpend: number | null
     earnMultiplier: number
     color: string
+    benefits: string[]
     createdAt: string
     updatedAt: string
 }
@@ -40,6 +41,7 @@ export const loyaltyTierFormSchema = z.object({
     maxSpend: z.number().nullable(),
     earnMultiplier: z.coerce.number().min(0, "Earn multiplier must be non-negative"),
     color: z.string().regex(/^#[0-9A-Fa-f]{6}$/i, "Must be a valid hex color"),
+    benefits: z.array(z.string()),
 })
 
 export type LoyaltyTierForm = z.infer<typeof loyaltyTierFormSchema>

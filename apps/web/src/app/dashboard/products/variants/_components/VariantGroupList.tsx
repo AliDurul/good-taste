@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { IProductVariantWithProduct } from '@workspace/schemas'
+import { IProduct } from '@workspace/schemas'
 import {
     Collapsible,
     CollapsibleContent,
@@ -22,20 +22,12 @@ import { cn } from '@workspace/ui/lib/utils'
 import { VariantFormSheet } from './VariantFormSheet'
 import { VariantRowActions } from './VariantRowActions'
 
-interface ProductGroup {
-    productId: string
-    productName: string
-    productDescription?: string
-    variants: IProductVariantWithProduct[]
-}
 
-interface VariantGroupListProps {
-    groups: ProductGroup[]
-}
 
-function ProductGroupSection({ group }: { group: ProductGroup }) {
+function ProductGroupSection({ product }: { product: IProduct }) {
     const [open, setOpen] = useState(false)
     const [addOpen, setAddOpen] = useState(false)
+    const variants = product.variants ?? []
 
     return (
         <>
@@ -45,7 +37,7 @@ function ProductGroupSection({ group }: { group: ProductGroup }) {
                     <CollapsibleTrigger asChild>
                         <button
                             className="flex flex-1 items-center gap-2 text-left"
-                            aria-label={`Toggle ${group.productName} variants`}
+                            aria-label={`Toggle ${product.name} variants`}
                         >
                             <ChevronRight
                                 className={cn(
@@ -54,13 +46,13 @@ function ProductGroupSection({ group }: { group: ProductGroup }) {
                                 )}
                             />
                             <div>
-                                <p className="font-semibold leading-tight">{group.productName}</p>
-                                {group.productDescription && (
-                                    <p className="text-muted-foreground text-xs">{group.productDescription}</p>
+                                <p className="font-semibold leading-tight">{product.name}</p>
+                                {product.description && (
+                                    <p className="text-muted-foreground text-xs">{product.description}</p>
                                 )}
                             </div>
                             <Badge variant="secondary" className="ml-2">
-                                {group.variants.length} {group.variants.length === 1 ? 'variant' : 'variants'}
+                                {variants.length} {variants.length === 1 ? 'variant' : 'variants'}
                             </Badge>
                         </button>
                     </CollapsibleTrigger>
@@ -77,7 +69,7 @@ function ProductGroupSection({ group }: { group: ProductGroup }) {
                 </div>
 
                 <CollapsibleContent>
-                    {group.variants.length === 0 ? (
+                    {variants.length === 0 ? (
                         <div className="flex flex-col items-center gap-2 py-8 text-center">
                             <PackageOpen className="text-muted-foreground size-8" />
                             <p className="text-muted-foreground text-sm">No variants yet.</p>
@@ -99,7 +91,7 @@ function ProductGroupSection({ group }: { group: ProductGroup }) {
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
-                                    {group.variants.map((variant, idx) => (
+                                    {variants.map((variant, idx) => (
                                         <TableRow key={variant.id}>
                                             <TableCell className="text-muted-foreground text-sm">
                                                 {idx + 1}
@@ -146,13 +138,13 @@ function ProductGroupSection({ group }: { group: ProductGroup }) {
             <VariantFormSheet
                 open={addOpen}
                 onOpenChange={setAddOpen}
-                productId={group.productId}
+                productId={product.id}
             />
         </>
     )
 }
 
-export function VariantGroupList({ groups }: VariantGroupListProps) {
+export function VariantGroupList({ groups }: { groups: IProduct[] }) {
     if (groups.length === 0) {
         return (
             <div className="flex flex-col items-center gap-3 py-16 text-center">
@@ -164,8 +156,8 @@ export function VariantGroupList({ groups }: VariantGroupListProps) {
 
     return (
         <div className="flex flex-col gap-3">
-            {groups.map((group) => (
-                <ProductGroupSection key={group.productId} group={group} />
+            {groups.map((product) => (
+                <ProductGroupSection key={product.id} product={product} />
             ))}
         </div>
     )

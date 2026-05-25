@@ -1,8 +1,7 @@
 import React from 'react'
 import { DataSection } from '@/components/DataSection'
-import { getVariants } from '@/actions/queries'
+import { getProducts } from '@/actions/queries'
 import { VariantGroupList } from './_components/VariantGroupList'
-import { IProductVariantWithProduct } from '@workspace/schemas'
 
 export default function page() {
     return (
@@ -25,30 +24,12 @@ export default function page() {
 }
 
 async function Variants() {
-    const result = await getVariants({ includeProduct: 'true', limit: '500' })
+    const result = await getProducts({ limit: '500' })
 
-    // Group variants by productId
-    const groupMap = new Map<string, {
-        productId: string
-        productName: string
-        productDescription?: string
-        variants: IProductVariantWithProduct[]
-    }>()
-
-    for (const variant of result.data) {
-        if (!groupMap.has(variant.productId)) {
-            groupMap.set(variant.productId, {
-                productId: variant.productId,
-                productName: variant.product.name,
-                productDescription: variant.product.description,
-                variants: [],
-            })
-        }
-        groupMap.get(variant.productId)!.variants.push(variant)
+    if (result.data.length === 0) {
+        return <div>No result found.</div>
     }
 
-    const groups = Array.from(groupMap.values())
-
-    return <VariantGroupList groups={groups} />
+    return <VariantGroupList groups={result.data} />
 }
 

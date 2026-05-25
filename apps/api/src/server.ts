@@ -13,6 +13,7 @@ app.use(cors({
     credentials: true,
 }));
 app.all("/api/v1/auth/*splat", toNodeHandler(auth)); // Better Auth middleware
+app.use('/api/v1/uploads', express.static('uploads')); // Serve uploaded files
 app.use(helmet());
 app.use(compression());
 app.use('/api/v1', rateLimit({

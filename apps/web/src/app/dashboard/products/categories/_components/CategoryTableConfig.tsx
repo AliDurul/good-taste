@@ -1,8 +1,6 @@
 "use client"
-import { Checkbox } from '@workspace/ui/components/checkbox'
 import { Badge } from '@workspace/ui/components/badge'
 import { ColumnDef } from '@tanstack/react-table'
-import { getRoles } from '@/lib/utils'
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -14,15 +12,13 @@ import {
 import { MoreHorizontal, Plus } from 'lucide-react'
 import { format } from 'date-fns'
 import { Button } from '@workspace/ui/components/button'
-import { useState, useTransition } from 'react'
-import Link from 'next/link'
-// import { deleteUser, toggleUserActive } from '@/actions/user.action'
-import { Tooltip, TooltipContent, TooltipTrigger } from '@workspace/ui/components/tooltip'
+import { useState } from 'react'
 import { toast } from 'sonner'
-import { Switch } from '@workspace/ui/components/switch'
 import { DataTableColumnHeader } from '@/components/table/data-table-column-header'
 import { DeleteDialog } from '@/components/DeleteDialog'
-import { IProduct, IProductCategory } from '@workspace/schemas'
+import { IProductCategory } from '@workspace/schemas'
+import { CategoryFormDialog } from './CategoryFormDialog'
+import { deleteCategory } from '@/actions/mutations'
 
 
 
@@ -59,8 +55,8 @@ import { IProduct, IProductCategory } from '@workspace/schemas'
 
 function RowActions({ category }: { category: IProductCategory }) {
     const [menuOpen, setMenuOpen] = useState(false)
+    const [editOpen, setEditOpen] = useState(false)
     const [deleteOpen, setDeleteOpen] = useState(false)
-    // const { data: activeOrg } = useActiveOrganization()
 
     return (
         <>
@@ -76,15 +72,14 @@ function RowActions({ category }: { category: IProductCategory }) {
                     </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-40">
-                    <DropdownMenuItem asChild >
-                        <Link href={`/products/${category.id}/edit`}>
-                            Edit
-                        </Link>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem asChild>
-                        <Link href={`/products/${category.id}`}>
-                            View Details
-                        </Link>
+                    <DropdownMenuItem
+                        onSelect={(e) => {
+                            e.preventDefault()
+                            setMenuOpen(false)
+                            setEditOpen(true)
+                        }}
+                    >
+                        Edit
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem
@@ -101,14 +96,19 @@ function RowActions({ category }: { category: IProductCategory }) {
                 </DropdownMenuContent>
             </DropdownMenu>
 
-            {/* {
-                deleteOpen && <DeleteDialog
-                    open={deleteOpen}
-                    onOpenChange={setDeleteOpen}
-                    onConfirm={async () => await deleteCategory(category.id)}
-                />
-            } */}
+            <CategoryFormDialog
+                open={editOpen}
+                onOpenChange={setEditOpen}
+                category={category}
+            />
 
+            <DeleteDialog
+                open={deleteOpen}
+                onOpenChange={setDeleteOpen}
+                onConfirm={() => deleteCategory(category.id)}
+                title={`Delete "${category.name}"?`}
+                description={`This will permanently delete "${category.name}". This action cannot be undone.`}
+            />
         </>
     )
 }
@@ -151,15 +151,15 @@ export const Columns: ColumnDef<IProductCategory>[] = [
     },
 ]
 
-export const toolbarAction = () => {
+export function CategoryToolbarActions() {
+    const [createOpen, setCreateOpen] = useState(false)
     return (
-        <div className='flex gap-3 '>
-            <Link href={'/products/new'} className='w-full'>
-                <Button className='w-full'>
-                    <Plus className="size-3" />
-                    Add New Category
-                </Button>
-            </Link>
-        </div>
+        <>
+            <Button onClick={() => setCreateOpen(true)}>
+                <Plus className="mr-1.5 size-3" />
+                Add New Category
+            </Button>
+            <CategoryFormDialog open={createOpen} onOpenChange={setCreateOpen} />
+        </>
     )
 }

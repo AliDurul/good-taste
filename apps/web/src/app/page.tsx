@@ -20,12 +20,12 @@ import { ContactForm } from "./_components/contact-form";
 // ─── Data ──────────────────────────────────────────────────────────────────────
 
 const PRODUCTS = [
-  { size: "1 kg", price: "$0.80", desc: "Perfect for households. Light and easy to carry.", popular: false },
-  { size: "2 kg", price: "$1.50", desc: "Great for small families. Freshly milled.", popular: false },
-  { size: "5 kg", price: "$3.50", desc: "Our most popular home pack.", popular: true },
-  { size: "10 kg", price: "$6.80", desc: "Ideal for larger families and small eateries.", popular: false },
-  { size: "25 kg", price: "$16.00", desc: "Bulk sack for restaurants and caterers.", popular: false },
-  { size: "50 kg", price: "$30.00", desc: "Commercial grade — wholesale & distributor pricing.", popular: false, bulk: true },
+  { size: "1 kg", price: "K0.80", desc: "Perfect for households. Light and easy to carry.", popular: false },
+  { size: "2 kg", price: "K1.50", desc: "Great for small families. Freshly milled.", popular: false },
+  { size: "5 kg", price: "K3.50", desc: "Our most popular home pack.", popular: true },
+  { size: "10 kg", price: "K6.80", desc: "Ideal for larger families and small eateries.", popular: false },
+  { size: "25 kg", price: "K16.00", desc: "Bulk sack for restaurants and caterers.", popular: false },
+  { size: "50 kg", price: "K30.00", desc: "Commercial grade — wholesale & distributor pricing.", popular: false, bulk: true },
 ];
 
 const WHY_US = [
@@ -76,7 +76,7 @@ export default function Page() {
       {/* ── Hero ─────────────────────────────────────────────────────────────── */}
       <section
         id="home"
-        className="relative overflow-hidden bg-gradient-to-br from-amber-50 via-orange-50 to-amber-100 pt-32 pb-24"
+        className="relative overflow-hidden bg-linear-to-br from-amber-50 via-orange-50 to-amber-100 pt-32 pb-24"
       >
         <div className="pointer-events-none absolute -top-24 -right-24 h-96 w-96 rounded-full bg-amber-200/40 blur-3xl" />
         <div className="pointer-events-none absolute bottom-0 -left-16 h-72 w-72 rounded-full bg-orange-200/30 blur-2xl" />
@@ -246,7 +246,7 @@ export default function Page() {
       {/* ── Good Pocket App ──────────────────────────────────────────────────── */}
       <section
         id="app"
-        className="py-24 bg-gradient-to-br from-stone-900 to-stone-800 text-white overflow-hidden relative"
+        className="py-24 bg-linear-to-br from-stone-900 to-stone-800 text-white overflow-hidden relative"
       >
         <div className="pointer-events-none absolute top-0 right-0 h-96 w-96 rounded-full bg-amber-500/10 blur-3xl" />
         <div className="pointer-events-none absolute bottom-0 left-0 h-64 w-64 rounded-full bg-orange-400/10 blur-2xl" />
@@ -302,7 +302,7 @@ export default function Page() {
               </div>
             </div>
             <div className="flex justify-center lg:justify-end">
-              <div className="relative flex h-[460px] w-56 items-center justify-center rounded-[2.5rem] border-4 border-stone-600 bg-stone-700 shadow-2xl">
+              <div className="relative flex h-115 w-56 items-center justify-center rounded-[2.5rem] border-4 border-stone-600 bg-stone-700 shadow-2xl">
                 <div className="absolute top-4 h-6 w-20 rounded-full bg-stone-600" />
                 <div className="flex flex-col items-center gap-3 px-4 text-center">
                   <div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-amber-600">
@@ -456,7 +456,7 @@ export default function Page() {
               </div>
               <Button
                 asChild
-                variant="outline"
+                variant="ghost"
                 size="sm"
                 className="border-stone-600 text-stone-300 hover:bg-stone-700 hover:text-white"
               >
@@ -466,7 +466,7 @@ export default function Page() {
           </div>
           <Separator className="my-8 bg-stone-800" />
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-stone-500">
-            <p>© {new Date().getFullYear()} Good Taste. All rights reserved.</p>
+            <p> Good Taste. All rights reserved.</p>
             <p>Freshly milled. Proudly delivered.</p>
           </div>
         </div>

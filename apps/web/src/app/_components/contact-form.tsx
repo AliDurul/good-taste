@@ -59,7 +59,7 @@ export function ContactForm() {
               <Input
                 {...field}
                 id={field.name}
-                placeholder="John Doe"
+                placeholder="e.g. Lee Mwale"
                 aria-invalid={fieldState.invalid}
                 disabled={isSubmitting}
               />
