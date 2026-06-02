@@ -136,7 +136,7 @@ importers:
         specifier: 5.9.3
         version: 5.9.3
 
-  apps/good-pocket:
+  apps/mobile:
     dependencies:
       '@expo/html-elements':
         specifier: ^0.12.5
@@ -10515,7 +10515,7 @@ snapshots:
       glob: 13.0.6
       hermes-parser: 0.32.1
       jsc-safe-url: 0.2.4
-      lightningcss: 1.30.2
+      lightningcss: 1.32.0
       picomatch: 4.0.4
       postcss: 8.5.15
       resolve-from: 5.0.0
