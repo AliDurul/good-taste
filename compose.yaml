@@ -1,0 +1,105 @@
+name: good-taste
+
+# ─── Usage ────────────────────────────────────────────────────────────────────
+# 1. Copy .env.example → .env in the repo root and fill in secrets.
+# 2. Copy apps/api/.env.example → apps/api/.env and fill in API secrets.
+# 3. docker compose build
+# 4. docker compose up -d
+#
+# Required root .env variables:
+#   POSTGRES_PASSWORD     – PostgreSQL superuser password
+#   NEXT_PUBLIC_API_URL   – Publicly reachable API URL baked into the web
+#                           client bundle (e.g. https://api.example.com)
+#                           Defaults to http://localhost:8001 for local use.
+#
+# Required apps/api/.env variables (runtime, not baked into image):
+#   BETTER_AUTH_SECRET    – Random secret for session signing
+#   BASE_URL              – Public base URL of the API (e.g. https://api.example.com)
+#   WEB_FRONTEND_URL      – Public URL of the web app (e.g. https://app.example.com)
+#   TRUSTED_ORIGINS       – Comma-separated list of allowed CORS origins
+#   GOOGLE_WEB_CLIENT_ID / GOOGLE_IOS_CLIENT_ID / GOOGLE_ANDROID_CLIENT_ID
+#   GOOGLE_CLIENT_SECRET
+#   FACEBOOK_CLIENT_ID / FACEBOOK_CLIENT_SECRET
+# ──────────────────────────────────────────────────────────────────────────────
+
+services:
+  # ── PostgreSQL ──────────────────────────────────────────────────────────────
+  postgres:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: goodtaste
+      POSTGRES_USER: goodtaste
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U goodtaste -d goodtaste"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    networks:
+      - backend
+
+  # ── API (Express + Prisma) ──────────────────────────────────────────────────
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    restart: unless-stopped
+    env_file:
+      - apps/api/.env
+    environment:
+      # DATABASE_URL is composed here so the password lives only in root .env
+      DATABASE_URL: postgresql://goodtaste:${POSTGRES_PASSWORD}@postgres:5432/goodtaste
+      PORT: "8001"
+      NODE_ENV: production
+    ports:
+      - "8001:8001"
+    volumes:
+      # Persist uploaded files across container restarts
+      - uploads:/app/uploads
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - backend
+      - frontend
+
+  # ── Web (Next.js standalone) ─────────────────────────────────────────────────
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+      args:
+        # NEXT_PUBLIC_API_URL is baked into the client bundle at build time.
+        # Set this to the publicly reachable API URL before running
+        # `docker compose build`.
+        # NOTE: apps/web/src/lib/auth-client.ts currently has a hardcoded
+        # baseURL. Update it to use process.env.NEXT_PUBLIC_API_URL for
+        # production deployments.
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:8001}
+    restart: unless-stopped
+    env_file:
+      - apps/web/.env
+    environment:
+      # Server-side API URL (internal Docker network — not exposed to browser)
+      API_URL: http://api:8001
+      NODE_ENV: production
+    ports:
+      - "3000:3000"
+    depends_on:
+      - api
+    networks:
+      - frontend
+
+volumes:
+  postgres_data:
+  uploads:
+
+networks:
+  backend:
+    driver: bridge
+  frontend:
+    driver: bridge

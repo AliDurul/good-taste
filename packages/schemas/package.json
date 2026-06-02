@@ -17,7 +17,10 @@
     "typescript": "5.9.3"
   },
   "exports": {
-    ".": "./src/index.ts",
-    "./*": "./src/*.ts"
+    ".": {
+      "require": "./dist/index.cjs",
+      "import": "./dist/index.js",
+      "types": "./src/index.ts"
+    }
   }
 }

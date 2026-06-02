@@ -1,11 +1,32 @@
+import { Suspense } from 'react'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { ChevronLeftIcon } from 'lucide-react'
+import { Skeleton } from '@workspace/ui/components/skeleton'
 import { Button } from '@workspace/ui/components/button'
 import { getCategories, getProduct } from '@/actions/queries'
 import { ProductForm } from '../../_components/ProductForm'
 
-export default async function EditProductPage({ params }: IPageParams) {
+export default function EditProductPage({ params }: IPageParams) {
+    return (
+        <div className="flex flex-col gap-8 p-4">
+            {/* Header */}
+            <div className="flex flex-col gap-1">
+                <h2 className="text-2xl font-semibold tracking-tight">Edit Product</h2>
+                <p className="text-muted-foreground">
+                    Update the details below to modify this product.
+                </p>
+            </div>
+
+            {/* Form */}
+            <Suspense fallback={<Skeleton className="h-96 w-full rounded-xl" />}>
+                <EditProductContent params={params} />
+            </Suspense>
+        </div>
+    )
+}
+
+async function EditProductContent({ params }: IPageParams) {
     const { slug } = await params
 
     const [productResult, categoriesResult] = await Promise.all([
@@ -30,7 +51,7 @@ export default async function EditProductPage({ params }: IPageParams) {
     }))
 
     return (
-        <div className="flex flex-col gap-8 p-4">
+        <>
             {/* Back button */}
             <Button variant="ghost" size="sm" className="self-start" asChild>
                 <Link href={`/dashboard/products/${slug}`}>
@@ -38,14 +59,6 @@ export default async function EditProductPage({ params }: IPageParams) {
                     Back to Product
                 </Link>
             </Button>
-
-            {/* Header */}
-            <div className="flex flex-col gap-1">
-                <h2 className="text-2xl font-semibold tracking-tight">Edit Product</h2>
-                <p className="text-muted-foreground">
-                    Update the details below to modify this product.
-                </p>
-            </div>
 
             {/* Form */}
             <div className="rounded-xl border p-6">
@@ -65,6 +78,6 @@ export default async function EditProductPage({ params }: IPageParams) {
                     }}
                 />
             </div>
-        </div>
+        </>
     )
 }
