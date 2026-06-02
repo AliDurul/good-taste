@@ -1,7 +1,7 @@
 import express, { Express } from 'express';
 import cors from 'cors';
 import { rateLimit } from 'express-rate-limit';
-import helmet from 'helmet';
+// import helmet from 'helmet';
 import compression from 'compression';
 import { toNodeHandler } from 'better-auth/node';
 import { auth } from './lib/auth';
@@ -14,7 +14,7 @@ app.use(cors({
 }));
 app.all("/api/v1/auth/*splat", toNodeHandler(auth)); // Better Auth middleware
 app.use('/api/v1/uploads', express.static('uploads')); // Serve uploaded files
-app.use(helmet());
+// app.use(helmet());
 app.use(compression());
 app.use('/api/v1', rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutes
