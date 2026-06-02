@@ -64,7 +64,7 @@ export function LandingNavbar() {
               asChild
               variant="outline"
               size="sm"
-              className="border-amber-600 text-amber-700 hover:bg-amber-50"
+              className="border-amber-600 text-amber-700 hover:bg-amber-50 hover:text-amber-700"
             >
               <a href="#app">Download App</a>
             </Button>
@@ -106,7 +106,7 @@ export function LandingNavbar() {
               <Button
                 asChild
                 variant="outline"
-                className="w-full border-amber-600 text-amber-700 hover:bg-amber-50"
+                className="w-full border-amber-600 text-amber-700 hover:bg-amber-50 hover:text-amber-700"
               >
                 <a href="#app" onClick={() => setMenuOpen(false)}>
                   Download App
