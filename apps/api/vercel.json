@@ -2,7 +2,6 @@
   "version": 2,
   "functions": {
     "dist/vercel.cjs": {
-      "runtime": "nodejs20.x",
       "maxDuration": 10,
       "includeFiles": "dist/**\ngenerated/prisma/**"
     }
