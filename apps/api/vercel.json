@@ -1,15 +1,16 @@
 {
-  "version": 2,
-  "functions": {
-    "dist/vercel.cjs": {
-      "maxDuration": 10,
-      "includeFiles": "dist/**\ngenerated/prisma/**"
-    }
-  },
-  "routes": [
-    {
-      "src": "/(.*)",
-      "dest": "dist/vercel.cjs"
-    }
-  ]
+	"version": 2,
+	"builds": [
+		{
+			"src": "dist/index.cjs",
+			"use": "@vercel/node",
+			"config": { "includeFiles": ["dist/**", "generated/prisma/**"] }
+		}
+	],
+	"routes": [
+		{
+			"src": "/(.*)",
+			"dest": "dist/index.cjs"
+		}
+	]
 }
