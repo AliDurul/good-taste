@@ -3,6 +3,12 @@ import app from "./server";
 import apiRoute from "./routes";
 import { errorHandler, notFound } from "./middlewares/common";
 
+
+// Health check endpoint
+app.get("/health", (req, res) => {
+  res.status(200).json({ status: "ok" });
+});
+
 // API routes
 app.use("/api/v1", apiRoute);
 
