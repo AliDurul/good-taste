@@ -1,6 +1,5 @@
 {
   "version": 2,
-  "ignoreCommand": "npx turbo-ignore --fallback=HEAD^1",
   "functions": {
     "dist/vercel.cjs": {
       "runtime": "@vercel/node",
