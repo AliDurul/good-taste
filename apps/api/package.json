@@ -9,7 +9,7 @@
   "scripts": {
     "start": "node dist/index.cjs",
     "dev": "tsx watch src/index.ts",
-    "build": "npx prisma generate && npx prisma migrate deploy && tsdown",
+    "build": "prisma generate && tsdown",
     "check-types": "tsc --noEmit",
     "lint": "eslint src/ --max-warnings 0",
     "db:generate": "pnpm dlx prisma generate",
