@@ -1,15 +1,15 @@
 {
   "version": 2,
   "functions": {
-    "apps/api/dist/vercel.cjs": {
+    "dist/vercel.cjs": {
       "maxDuration": 10,
-      "includeFiles": "apps/api/dist/**\napps/api/generated/prisma/**"
+      "includeFiles": "dist/**\ngenerated/prisma/**"
     }
   },
   "routes": [
     {
       "src": "/(.*)",
-      "dest": "apps/api/dist/vercel.cjs"
+      "dest": "dist/vercel.cjs"
     }
   ]
 }
