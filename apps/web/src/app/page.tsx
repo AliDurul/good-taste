@@ -153,12 +153,12 @@ export default function Page() {
                 }`}
               >
                 {product.popular && (
-                  <div className="absolute -top-3 left-1/2 -translate-x-1/2">
+                  <div className="absolute -top-0 left-1/2 -translate-x-1/2">
                     <Badge className="bg-amber-600 text-white">Most Popular</Badge>
                   </div>
                 )}
                 {product.bulk && (
-                  <div className="absolute -top-3 left-1/2 -translate-x-1/2">
+                  <div className="absolute -top-0 left-1/2 -translate-x-1/2">
                     <Badge className="bg-stone-800 text-white">Wholesale</Badge>
                   </div>
                 )}

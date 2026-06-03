@@ -9,6 +9,7 @@ import {
     FieldError,
     FieldGroup,
     FieldLabel,
+    FieldSeparator,
 } from "@workspace/ui/components/field"
 import { Input } from "@workspace/ui/components/input"
 import Image from "next/image"
@@ -140,9 +141,9 @@ export function LoginForm({
                                     <span className="sr-only">Login with Meta</span>
                                 </Button>
                             </Field> */}
-                            {/* <FieldDescription className="text-center">
-                                Don&apos;t have an account? <a href="#">Sign up</a>
-                            </FieldDescription> */}
+                            <FieldDescription className="text-center">
+                                Don&apos;t have an account? <Link href="/">Go Back</Link>
+                            </FieldDescription>
                         </FieldGroup>
                     </form>
                     <div className="relative hidden bg-muted md:block">

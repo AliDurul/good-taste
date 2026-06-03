@@ -3,9 +3,6 @@
   "version": "0.0.0",
   "type": "module",
   "private": true,
-  "engines": {
-    "node": "20.x"
-  },
   "scripts": {
     "start": "node dist/index.cjs",
     "dev": "tsx watch src/index.ts",
@@ -14,7 +11,8 @@
     "lint": "eslint src/ --max-warnings 0",
     "db:generate": "pnpm dlx prisma generate",
     "db:migrate": "pnpm dlx prisma migrate dev",
-    "db:studio": "pnpm dlx prisma studio"
+    "db:studio": "pnpm dlx prisma studio",
+    "db:seed": "pnpm dlx prisma db seed"
   },
   "dependencies": {
     "@better-auth/expo": "^1.6.9",
