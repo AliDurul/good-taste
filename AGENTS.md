@@ -13,7 +13,7 @@ Full-stack food/restaurant platform. Turborepo monorepo with pnpm workspaces.
 
 | Package | Import alias | Purpose |
 |---|---|---|
-| `packages/schemas` | `@workspace/schemas` | Shared Zod schemas + inferred types (used by both apps) |
+| `packages/schemas` | `@/schemas` | Shared Zod schemas + inferred types (used by both apps) |
 | `packages/ui` | `@workspace/ui` | shadcn/ui component library |
 | `packages/typescript-config` | `@workspace/typescript-config` | Shared tsconfig bases |
 | `packages/eslint-config` | `@workspace/eslint-config` | Shared ESLint configs |
