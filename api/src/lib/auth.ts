@@ -6,6 +6,7 @@ import { admin as adminPlugin, openAPI } from "better-auth/plugins";
 import { expo } from "@better-auth/expo";
 import { bearer } from "better-auth/plugins";
 import { ac, admin, agent, customer, officer } from "./permissions";
+import { generateReferralCode } from "./utils";
 
 export const auth = betterAuth({
     database: prismaAdapter(prisma, {
@@ -24,6 +25,46 @@ export const auth = betterAuth({
             assignedAgentId: { type: "string", input: true, required: false, },
             referredById: { type: "string", input: true, required: false, },
             tierId: { type: "string", input: false, required: false, },
+            role: { type: "string", input: false, required: false },
+        }
+    },
+    databaseHooks: {
+        user: {
+            create: {
+                after: async (user) => {
+                    if (user.role !== "customer") return;
+
+                    try {
+                        // Use Prisma transaction
+                        await prisma.$transaction(async (tx) => {
+                            const bronzeTier = await tx.loyaltyTier.findFirst({
+                                where: { name: "Bronze" }
+                            });
+
+                            const referralCode = generateReferralCode();
+                            // Update user with referral code and tier
+                            await tx.user.update({
+                                where: { id: user.id },
+                                data: {
+                                    referralCode,
+                                    tierId: bronzeTier?.id
+                                },
+                            });
+                            // Create tier history entry
+                            await tx.tierHistory.create({
+                                data: {
+                                    customerId: user.id,
+                                    fromTierId: null,
+                                    toTierId: bronzeTier?.id,
+                                    reason: "initial"
+                                },
+                            });
+                        });
+                    } catch (error) {
+                        console.error("Failed to set up customer:", error);
+                    }
+                }
+            }
         }
     },
     emailAndPassword: {
@@ -49,11 +90,9 @@ export const auth = betterAuth({
     advanced: {
         generateId: () => crypto.randomUUID(),
         cookiePrefix: "goodtaste",
-        // useSecureCookies: process.env.NODE_ENV === "production",
         useSecureCookies: true,
         defaultCookieAttributes: {
             sameSite: "lax",
-            // secure: process.env.NODE_ENV === "production",
             secure: true,
             path: "/",
             httpOnly: true,
@@ -79,10 +118,7 @@ export const auth = betterAuth({
     session: {
         expiresIn: 60 * 60 * 24 * 7,
         updateAge: 60 * 60 * 24,
-        cookieCache: {
-            enabled: true,
-            maxAge: 10 * 60,
-        }
+        cookieCache: { enabled: true, maxAge: 10 * 60}
     },
     trustedOrigins: [
         process.env.WEB_FRONTEND_URL!, // e.g., "https://myapp.com"

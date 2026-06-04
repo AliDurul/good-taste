@@ -7,11 +7,11 @@ import { checkPermission } from "../middlewares/auth.middleware";
 const router: Router = Router();
 
 router.route('/')
-    .get(parsePagination(50), listUsers)
+    .get(parsePagination(), checkPermission({ user: ['list'] }), listUsers)
     .post(checkPermission({ user: ['create'] }), createUser);
 
 router.route('/:id')
-    .get(getUser)
+    .get(checkPermission({ user: ['get'] }), getUser)
     .put(checkPermission({ user: ['update'] }), validate(userUpdateSchema), updateUser)
     .delete(checkPermission({ user: ['delete'] }), deleteUser);
 

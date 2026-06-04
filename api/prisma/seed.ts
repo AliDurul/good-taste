@@ -59,7 +59,7 @@ const products = [
                 "weightLabel": "25kg",
                 "price": 250.00,
                 "earnValue": 2.50,
-                "stockQty": 0,
+                "stockQty": 100000000,
                 "lowStockThreshold": 30
             },
             {
@@ -67,7 +67,7 @@ const products = [
                 "weightLabel": "20kg",
                 "price": 200.00,
                 "earnValue": 2.00,
-                "stockQty": 0,
+                "stockQty": 100000000,
                 "lowStockThreshold": 30
             },
             {
@@ -75,7 +75,7 @@ const products = [
                 "weightLabel": "12.5kg",
                 "price": 125.00,
                 "earnValue": 1.25,
-                "stockQty": 0,
+                "stockQty": 100000000,
                 "lowStockThreshold": 30
             },
             {
@@ -83,7 +83,7 @@ const products = [
                 "weightLabel": "10kg",
                 "price": 100.00,
                 "earnValue": 1.00,
-                "stockQty": 0,
+                "stockQty": 100000000,
                 "lowStockThreshold": 30
             },
             {
@@ -91,7 +91,7 @@ const products = [
                 "weightLabel": "5kg",
                 "price": 50.00,
                 "earnValue": 0.50,
-                "stockQty": 0,
+                "stockQty": 100000000,
                 "lowStockThreshold": 30
             }
         ]
@@ -107,7 +107,7 @@ const products = [
                 "weightLabel": "25kg",
                 "price": 275.00,
                 "earnValue": 2.75,
-                "stockQty": 0,
+                "stockQty": 100000000,
                 "lowStockThreshold": 30
             }
         ]
@@ -123,7 +123,7 @@ const products = [
                 "weightLabel": "25kg",
                 "price": 300.00,
                 "earnValue": 3.00,
-                "stockQty": 0,
+                "stockQty": 100000000,
                 "lowStockThreshold": 30
             }
         ]
@@ -139,7 +139,7 @@ const products = [
                 "weightLabel": "25kg",
                 "price": 250.00,
                 "earnValue": 2.50,
-                "stockQty": 0,
+                "stockQty": 100000000,
                 "lowStockThreshold": 30
             }
         ]
@@ -155,7 +155,7 @@ const products = [
                 "weightLabel": "25kg",
                 "price": 300.00,
                 "earnValue": 3.00,
-                "stockQty": 0,
+                "stockQty": 100000000,
                 "lowStockThreshold": 30
             }
         ]

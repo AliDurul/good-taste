@@ -1,13 +1,35 @@
-// ─────────────────────────────────────────────────────────────────────────────
-// calculateEarnValue
-// Earn = 1% of price by default, rounded to 2 decimal places.
-// Always call this server-side — never trust client.
-
+import { CustomError } from "../lib/common";
 import { prisma } from "../lib/prisma";
 
-// ─────────────────────────────────────────────────────────────────────────────
-export const calculateEarnValue = (price: number) =>
-    parseFloat((price * 0.01).toFixed(2));
+// ---------------------------------------------------------------------------
+// Helper: apply a promotion to totals
+// ---------------------------------------------------------------------------
+export function applyPromotion(
+    promotion: Awaited<ReturnType<typeof findApplicablePromotion>>,
+    totalAmount: number
+) {
+    let discountAmount = 0;
+    let isFreeDelivery = false;
+    let earnMultiplier = 1;
+
+    if (!promotion) return { discountAmount, isFreeDelivery, earnMultiplier };
+
+    const val = promotion.discountValue ?? 0;
+    switch (promotion.type) {
+        case "percentage_discount":
+        case "bundle":
+            discountAmount = parseFloat(((totalAmount * val) / 100).toFixed(2)); break;
+        case "fixed_discount":
+            discountAmount = Math.min(val, totalAmount); break;
+        case "free_delivery":
+            isFreeDelivery = true; break;
+        case "double_points":
+            earnMultiplier = val || 2; break;
+    }
+
+    return { discountAmount, isFreeDelivery, earnMultiplier };
+}
+
 
 // ─────────────────────────────────────────────────────────────────────────────
 // getWalletExpiry
@@ -129,3 +151,29 @@ export const findApplicablePromotion = async (customerId: string, variantIds: st
 
     return null;
 };
+
+// ---------------------------------------------------------------------------
+// Helper: fetch + validate variants, enforce stock
+// ---------------------------------------------------------------------------
+export async function buildLineItems(items: { variantId: string; quantity: number }[]) {
+    const variantIds = items.map((i) => i.variantId);
+
+    const variants = await prisma.productVariant.findMany({
+        where: { id: { in: variantIds }, isActive: true },
+        include: { product: { select: { id: true, name: true, category: { select: { id: true, name: true } } } } },
+    });
+
+    const errors: string[] = [];
+    for (const item of items) {
+        const variant = variants.find((v) => v.id === item.variantId);
+        if (!variant) { errors.push(`Variant ${item.variantId} not found or inactive`); continue; }
+        if (variant.isOutOfStock) {
+            errors.push(`${variant.product.name} (${variant.weightLabel}) is out of stock`);
+        } else if (item.quantity > variant.stockQty) {
+            errors.push(`${variant.product.name} (${variant.weightLabel}) only has ${variant.stockQty} in stock`);
+        }
+    }
+    if (errors.length > 0) throw new CustomError(errors.join("; "), 400, true);
+
+    return { variants, variantIds };
+}

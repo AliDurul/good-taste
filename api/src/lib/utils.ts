@@ -8,3 +8,7 @@ import { randomBytes } from "crypto";
 export const generateReferralCode = (): string => {
     return randomBytes(4).toString("hex").toUpperCase();
 };
+
+
+
+

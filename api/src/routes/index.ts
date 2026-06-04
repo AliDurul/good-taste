@@ -9,7 +9,7 @@ import variantRoutes from "./variant.route";
 import orderRoutes from "./order.route";
 import loyaltyTierRoutes from "./loyalty-tier.route";
 import walletConfigRoutes from "./wallet-config.route";
-import { upload } from "../middlewares/common";
+import walletTransactionRoutes from "./wallet-transaction.route";
 
 const router: Router = Router();
 
@@ -21,6 +21,9 @@ const router: Router = Router();
 
 // wallet configs
 router.use('/wallet-configs', authenticate, walletConfigRoutes);
+
+// wallet transactions
+router.use('/wallet-transactions', authenticate, walletTransactionRoutes);
 
 // categories
 router.use('/categories', authenticate, categoryRoutes);

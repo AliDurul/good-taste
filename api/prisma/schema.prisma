@@ -21,12 +21,27 @@ enum OrderStatus {
   confirmed
   out_for_delivery
   delivered
+  completed
   cancelled
+}
+
+enum PaymentStatus {
+  pending
+  paid
+  failed
+}
+
+enum PaymentMethod {
+  cash
+  mobile_money
+  bank_transfer
+  wallet
 }
 
 enum OrderPlacedBy {
   customer
   agent
+  officer
 }
 
 enum WalletTransactionType {
@@ -262,6 +277,9 @@ model Order {
   status   OrderStatus   @default(pending)
   placedBy OrderPlacedBy
 
+  paymentStatus PaymentStatus @default(pending)
+  paymentMethod PaymentMethod @default(cash)
+
   totalAmount    Float
   discountAmount Float   @default(0)
   finalAmount    Float
@@ -273,10 +291,14 @@ model Order {
   deliveryAddress String?
   notes           String?
 
-  cashConfirmedAt DateTime?
-  deliveredAt     DateTime?
-  cancelledAt     DateTime?
-  cancelReason    String?
+  confirmedAt        DateTime?
+  outForDeliveryAt   DateTime?
+  deliveredAt        DateTime?
+  completedAt        DateTime?
+  paymentConfirmedAt DateTime? // for agent approve
+  paidAt             DateTime? // for customer approve
+  cancelledAt        DateTime?
+  cancelReason       String?
 
   items  OrderItem[] // one-to-many
   qrCode QRCode?
@@ -306,31 +328,37 @@ model OrderItem {
   earnValue    Float // e.g. 2.50 (1% of price at time of order)
   quantity     Int
   subtotal     Float // productPrice × quantity
-  product      Product? @relation(fields: [productId], references: [id])
   productId    String?
+  product      Product? @relation(fields: [productId], references: [id])
 
   @@index([orderId])
   @@map("order_item")
 }
 
 model QRCode {
-  id      String @id @default(uuid())
-  orderId String @unique
-  order   Order  @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  id   String @id @default(uuid())
+  code String @unique // UUID or signed token
 
+  // who & what
+  orderId    String @unique
   customerId String
-  customer   User   @relation("CustomerQRCodes", fields: [customerId], references: [id])
+  agentId    String
 
-  agentId String
-  agent   User   @relation("AgentQRCodes", fields: [agentId], references: [id])
-
-  code      String    @unique // UUID or signed token
-  expiresAt DateTime
-  isExpired Boolean   @default(false) // set by cron when expiresAt is past
+  // state
   isUsed    Boolean   @default(false)
   usedAt    DateTime?
+  expiresAt DateTime
 
+  // other
   amountToCredit Float // pre-calculated on generation
+  totalAmount    Float // for reference — e.g. 250.00
+  orderReference String // e.g. "ORD-20231010-1234"
+  itemsSummary   Json // e.g. [{ productName: "Breakfast", weightLabel: "25kg", quantity: 1 }]
+
+  // relations
+  order    Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  customer User  @relation("CustomerQRCodes", fields: [customerId], references: [id])
+  agent    User  @relation("AgentQRCodes", fields: [agentId], references: [id])
 
   createdAt DateTime @default(now())
 

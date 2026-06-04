@@ -1,7 +1,8 @@
 import { RequestHandler } from "express";
 import { prisma } from "../lib/prisma";
 import { CustomError } from "../lib/common";
-import { ProductInclude, ProductOrderByWithRelationInput, ProductWhereInput } from "../../generated/prisma/models";
+import { ProductOrderByWithRelationInput, ProductWhereInput } from "../../generated/prisma/models";
+import { calculateEarnValue } from "../services/product.services";
 
 export const listProducts: RequestHandler = async (req, res) => {
     const query = req.query as Record<string, string | undefined>;
@@ -14,7 +15,7 @@ export const listProducts: RequestHandler = async (req, res) => {
 
     const orderBy: ProductOrderByWithRelationInput = query.sortBy
         ? { [query.sortBy]: query.sortDirection === "desc" ? "desc" : "asc" }
-        : { createdAt: "desc" };
+        : { name: "asc" };
 
     const [products, totalCount] = await Promise.all([
         prisma.product.findMany({
@@ -23,7 +24,19 @@ export const listProducts: RequestHandler = async (req, res) => {
             take: limit,
             orderBy,
             include: {
-                variants: true,
+                variants: {
+                    where: { isActive: true },
+                    orderBy: { weightKg: "asc" },
+                    select: {
+                        id: true,
+                        productId: true,
+                        weightKg: true,
+                        weightLabel: true,
+                        price: true,
+                        earnValue: true,
+                        image: true,
+                    },
+                },
                 category: {
                     select: {
                         id: true,
@@ -57,7 +70,9 @@ export const getProduct: RequestHandler = async (req, res) => {
     const product = await prisma.product.findUnique({
         where: { id },
         include: {
-            variants: true,
+            variants: {
+                orderBy: { weightKg: "asc" },
+            },
             category: {
                 select: {
                     id: true,
@@ -83,15 +98,15 @@ export const createProduct: RequestHandler = async (req, res) => {
             ...productData,
             ...(variants?.length ? {
                 variants: {
-                    create: variants.map((variant: any) => ({
+                    create: await Promise.all(variants.map(async (variant: any) => ({
                         weightKg: variant.weightKg,
                         weightLabel: variant.weightLabel,
                         price: variant.price,
-                        earnValue: variant.earnValue,
+                        earnValue: variant.earnValue ?? await calculateEarnValue(variant.price),
                         image: variant.image,
                         stockQty: variant.stockQty,
                         lowStockThreshold: variant.lowStockThreshold,
-                    }))
+                    })))
                 }
             } : {}),
         },

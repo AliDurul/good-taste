@@ -70,6 +70,7 @@ export const createUser: RequestHandler = async (req, res) => {
         body: {
             email,
             password,
+            // Omit password entirely - user can't login until they set it
             name,
             role: effectiveRole,
             data: {
@@ -85,29 +86,19 @@ export const createUser: RequestHandler = async (req, res) => {
         headers: fromNodeHeaders(req.headers),
     }) as CreateUserResult;
 
-
-    const userId: string | undefined = result?.user?.id ?? result?.id;
-
-    if (userId && effectiveRole === "customer") {
-        await prisma.$transaction(async (tx) => {
-            const bronzeTier = await tx.loyaltyTier.findFirst({ where: { name: "Bronze" } });
-
-            if (!bronzeTier) {
-                throw new CustomError("Bronze loyalty tier is not seeded. Run the database seed before creating customers.", 500, false);
-            }
-
-            const referralCode = generateReferralCode();
-
-            result = await tx.user.update({
-                where: { id: userId },
-                data: { referralCode, tierId: bronzeTier.id },
-            });
-
-            await tx.tierHistory.create({
-                data: { customerId: userId, fromTierId: null, toTierId: bronzeTier.id, reason: "initial" },
-            });
-        });
-    }
+    // // 3. Send invite email - use Magic Link plugin or Password Reset
+    // // Option A: Magic Link (they click, auto-login, then prompt to set password)
+    // await authClient.signIn.magicLink({
+    //     email,
+    //     callbackURL: "/auth/setup-password?firstLogin=true"
+    // });
+    // // Option B: Force Password Reset (cleaner for "Set your password" UX)
+    // // Generate reset token and send custom email
+    // const resetData = await auth.api.forgetPassword({
+    //     body: { email, redirectTo: "/auth/set-password" }
+    // });
+    // // Send custom email with deep link: 
+    // // myapp://set-password?token=xxx
 
     res.status(201).send({ success: true, data: result });
 };
@@ -127,17 +118,20 @@ export const getUser: RequestHandler = async (req, res) => {
 export const updateUser: RequestHandler = async (req, res) => {
     const { id } = req.params;
 
-    const { birthday, ...rest } = req.validatedBody;
+    const { birthday, ...rest } = req.body;
 
-    const updated = await prisma.user.update({
-        where: { id },
-        data: {
-            ...rest,
-            ...(birthday && { birthday: new Date(birthday) }),
+    const data = await auth.api.adminUpdateUser({
+        body: {
+            userId: id,
+            data: {
+                ...rest,
+                ...(birthday && { birthday: new Date(birthday) }),
+            },
         },
+        headers: fromNodeHeaders(req.headers),
     });
 
-    res.status(200).send({ success: true, data: updated });
+    res.status(200).send({ success: true, data });
 };
 
 export const deleteUser: RequestHandler = async (req, res) => {
@@ -155,7 +149,7 @@ export const deleteUser: RequestHandler = async (req, res) => {
 
 export const banUser: RequestHandler = async (req, res) => {
     const { id } = req.params as { id: string };
-    const { banReason, banExpiresIn } = req.validatedBody;
+    const { banReason, banExpiresIn } = req.body;
 
     await auth.api.banUser({
         body: {
@@ -183,7 +177,7 @@ export const unbanUser: RequestHandler = async (req, res) => {
 
 export const setUserRole: RequestHandler = async (req, res) => {
     const { id } = req.params as { id: string };
-    const { role } = req.validatedBody;
+    const { role } = req.body;
 
     await auth.api.setRole({
         body: {

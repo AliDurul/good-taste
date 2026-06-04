@@ -1,6 +1,9 @@
 @baseurl = http://localhost:8000/api/v1
 @token = {{signInBetterAuth.response.body.token}}
 
+@agent1Token = FLVT8CveRZbGnOOEMybLQGbh1cCdvTgg
+@customer8Token = OihuQvfKB0h2TNzjRshOSoaLfNr3mmHw
+
 ### BETTER AUTH
 
 # @name signUpBetterAuth
@@ -8,10 +11,10 @@ POST {{baseurl}}/auth/sign-up/email
 Content-Type: application/json
 
 {
-  "email": "customer2@test.com",
+  "email": "customer11@test.com",
   "password": "pass1234",
-  "name": "customer 2",
-  "phone": "1234567890",
+  "name": "customer 11",
+  "phone": "1234567898",
   "birthday": "1990-01-01"
 }
 
@@ -22,8 +25,8 @@ POST {{baseurl}}/auth/sign-in/email
 Content-Type: application/json
 
 {
-  "email": "admin@test.com",
-  "password": "admin1234"
+  "email": "customer8@test.com",
+  "password": "pass1234"
 }
 ### 
 
@@ -70,7 +73,13 @@ Authorization: Bearer {{token}}
 
 
 # @name userlist
-GET {{baseurl}}/users
+GET {{baseurl}}/users?
+Authorization: Bearer {{token}}
+
+###
+
+# @name userRead
+GET {{baseurl}}/users/gFyCpSKP0QbgO19x0eQlFQP3sEE807cc
 Authorization: Bearer {{token}}
 
 ###
@@ -81,9 +90,8 @@ Content-Type: application/json
 Authorization: Bearer {{token}}
 
 {
-    "name": "customer5",
-    "email": "customer5@test.com",
-    "image": "https://example.com/images/customer5.jpg",
+    "name": "customer8",
+    "email": "customer8@test.com",
     "password": "pass1234",
     "phone": "1234567890",
     "address": "123 Main St",
@@ -154,6 +162,12 @@ Authorization: Bearer {{token}}
 
 ###
 
+# @name productRead
+get {{baseurl}}/products/0ce0acfb-2f0b-4d48-8065-405a08a68b2d
+Authorization: Bearer {{token}}
+
+###
+
 # @name productDelete
 delete {{baseurl}}/products/3dac08c1-5661-4cf1-88cf-430c42e5e92a
 Authorization: Bearer {{token}}
@@ -177,11 +191,25 @@ Authorization: Bearer {{token}}
 Content-Type: application/json
 
 {
-    "name": "Super Roller",
-    "description": "Super Roller",
-    "image": "https://example.com/images/productroller12_5.jpg",
+    "name": "test product",
     "isActive": true,
-    "categoryId": "737b2989-5e04-48d8-9506-a98666eb427f"
+    "categoryId": "7b84aca4-723a-4e6b-9eb9-28cf558124b7",
+    "variants": [
+        {
+            "weightKg": 25,
+            "weightLabel": "25kg",
+            "price": 250.00,
+            "stockQty": 0,
+            "lowStockThreshold": 30
+        },
+        {
+            "weightKg": 50,
+            "weightLabel": "50kg",
+            "price": 450.00,
+            "stockQty": 0,
+            "lowStockThreshold": 30
+        }
+    ]
 }
 
 
@@ -189,8 +217,8 @@ Content-Type: application/json
 
 # @name variantlist
 GET {{baseurl}}/variants
-# ?ids=0a68412b-1a16-48b1-9fd3-b14343ee4803,0bfa83d6-012d-4c63-ad35-dd20a9b2a77c
-?includeProduct=true
+?ids=001eb2af-a696-4557-a613-ada1637ad1e7,170b7ff0-5170-483b-8044-731459f9efa5
+# ?includeProduct=true
 Authorization: Bearer {{token}}
 
 ###
@@ -262,6 +290,12 @@ Authorization: Bearer {{token}}
 
 ###
 
+# @name orderRead
+GET {{baseurl}}/orders/afd39c95-56ac-4f92-8cd9-b0d93d748741
+Authorization: Bearer {{agent1Token}}
+
+###
+
 # @name previewBasket
 POST {{baseurl}}/orders/preview
 Authorization: Bearer {{token}}
@@ -270,11 +304,11 @@ Content-Type: application/json
 {
   "items":[
     {
-      "variantId": "0bfa83d6-012d-4c63-ad35-dd20a9b2a77c",
+      "variantId": "001eb2af-a696-4557-a613-ada1637ad1e7",
       "quantity": 2
     },
     {
-      "variantId": "11b37f7b-a765-4a82-ac7f-c04ca388d2e6",
+      "variantId": "170b7ff0-5170-483b-8044-731459f9efa5",
       "quantity": 1
     }
   ]
@@ -288,14 +322,41 @@ Authorization: Bearer {{token}}
 Content-Type: application/json
 
 {
+  "notes": "Please deliver between 9am-5pm",
   "items":[
     {
-      "variantId": "0bfa83d6-012d-4c63-ad35-dd20a9b2a77c",
+      "variantId": "001eb2af-a696-4557-a613-ada1637ad1e7",
       "quantity": 2
     },
     {
-      "variantId": "11b37f7b-a765-4a82-ac7f-c04ca388d2e6",
+      "variantId": "170b7ff0-5170-483b-8044-731459f9efa5",
       "quantity": 1
     }
   ]
+}
+
+
+###
+
+### 
+
+# @name orderConfirm
+PATCH  {{baseurl}}/orders/afd39c95-56ac-4f92-8cd9-b0d93d748741/confirm
+Authorization: Bearer {{agent1Token}}
+
+### 
+
+# @name orderDeliver
+PATCH  {{baseurl}}/orders/afd39c95-56ac-4f92-8cd9-b0d93d748741/deliver
+Authorization: Bearer {{agent1Token}}
+
+### 
+
+# @name orderScanQR
+POST  {{baseurl}}/orders/scan-qr
+Authorization: Bearer {{customer8Token}}
+Content-Type: application/json
+
+{
+  "code": "gt_e68007a5-cf91-4df0-8151-b014c22f3d02"
 }

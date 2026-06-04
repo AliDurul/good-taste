@@ -14,14 +14,17 @@ export const listVariants: RequestHandler = async (req, res) => {
 
     if (query?.ids) {
         where['id'] = { in: (query.ids as string).split(',') };
+        where['isActive'] = true;
+        where['isOutOfStock'] = false;
     }
 
     const include: ProductVariantInclude = {};
     
     if (query?.includeProduct === 'true') {
-        include.product = true;
+        include.product = {
+            select: {name: true }
+        }
     }
-
 
     const [variants, totalCount] = await Promise.all([
         prisma.productVariant.findMany({

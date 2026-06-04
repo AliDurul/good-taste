@@ -6,7 +6,7 @@ import { defaultStatements, adminAc } from "better-auth/plugins/admin/access";
 
 const statement = {
 	...defaultStatements,
-	user:[...defaultStatements.user, 'update'],
+	user:[...defaultStatements.user],
 	category: ['create', 'get', 'update', 'delete', 'list'],
 	product: ['create', 'get', 'update', 'delete', 'list'],
 	productVariant: ['create', 'get', 'update', 'delete', 'list'],
