@@ -504,7 +504,7 @@ export const updateOrder: RequestHandler = async (req, res) => {
     }
 
     if (status === "confirmed") {
-        const updated = await prisma.order.update({ where: { id }, data: { ...simpleUpdate, status, cashConfirmedAt: new Date() } });
+        const updated = await prisma.order.update({ where: { id }, data: { ...simpleUpdate, status, confirmedAt: new Date() } });
         return res.status(200).send({ success: true, data: updated });
     }
 
