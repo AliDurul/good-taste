@@ -118,15 +118,14 @@ export const auth = betterAuth({
     session: {
         expiresIn: 60 * 60 * 24 * 7,
         updateAge: 60 * 60 * 24,
-        cookieCache: { enabled: true, maxAge: 10 * 60}
+        cookieCache: { enabled: true, maxAge: 10 * 60 }
     },
     trustedOrigins: [
-        process.env.WEB_FRONTEND_URL!, // e.g., "https://myapp.com"
-        "myapp://", // ⬅️ Your mobile app deep link scheme
-        ...(process.env.NODE_ENV === "development" ? [
-            "exp://", // Expo dev client
-            "exp://**",
-        ] : []),
+        process.env.WEB_FRONTEND_URL!,
+        "http://10.0.2.2:8000", // For Android emulator accessing backend
+        // "http://192.168.1.x:3000", // For physical devices on local network
+        // "myapp://", // Your mobile app scheme (for deep links)
+
     ],
     secret: process.env.BETTER_AUTH_SECRET!,
     baseURL: process.env.BASE_URL!,

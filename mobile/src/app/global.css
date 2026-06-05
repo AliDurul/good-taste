@@ -15,87 +15,71 @@
                            wins on web. Ignored on native (no DOM). */
 @layer theme {
   :root {
-    --primary: 23 23 23;
-    --primary-foreground: 250 250 250;
-    --card: 255 255 255;
-    --secondary: 245 245 245;
-    --secondary-foreground: 23 23 23;
-    --background: 255 255 255;
-    --popover: 255 255 255;
-    --popover-foreground: 10 10 10;
-    --muted: 245 245 245;
-    --muted-foreground: 115 115 115;
-    --destructive: 231 0 11;
-    --foreground: 10 10 10;
-    --border: 229 229 229;
-    --input: 229 229 229;
-    --ring: 212 212 212;
-    --accent: 247 247 247;
-    --accent-foreground: 52 52 52;
+/* ==========================================================================
+     LIGHT MODE (Cream Background, Forest Green Details, Gold Accents)
+     ========================================================================== */
+  --background: 249 245 235;         /* Cream (#F9F5EB) */
+  --foreground: 4 63 39;             /* Forest Green (#043F27) */
+
+  --primary: 212 175 55;             /* Gold (#D4AF37) */
+  --primary-foreground: 4 63 39;      /* Forest Green (Optimized for 5.7:1 WCAG AA contrast) */
+
+  --secondary: 4 63 39;              /* Forest Green (#043F27) */
+  --secondary-foreground: 249 245 235;/* Cream (#F9F5EB) */
+
+  --card: 255 255 255;               /* Pure White */
+  --card-foreground: 4 63 39;        /* Forest Green (#043F27) */
+
+  --popover: 255 255 255;            /* Pure White */
+  --popover-foreground: 4 63 39;     /* Forest Green (#043F27) */
+
+  --muted: 238 231 214;              /* Darker Cream (Tinted background) */
+  --muted-foreground: 85 105 95;     /* Desaturated Green (For subtle text) */
+
+  --accent: 238 231 214;             /* Darker Cream */
+  --accent-foreground: 4 63 39;      /* Forest Green (#043F27) */
+
+  --destructive: 197 49 49;          /* Accessible Deep Red */
+  --destructive-foreground: 255 255 255; /* White */
+
+  --border: 215 205 185;             /* Muted Cream-Gray */
+  --input: 215 205 185;              /* Muted Cream-Gray */
+  --ring: 212 175 55;                /* Gold (#D4AF37) */
   }
 
   @media (prefers-color-scheme: dark) {
     :root {
-      --primary: 255 245 245;
-      --primary-foreground: 23 23 23;
-      --card: 23 23 23;
-      --secondary: 38 38 38;
-      --secondary-foreground: 250 250 250;
-      --background: 10 10 10;
-      --popover: 23 23 23;
-      --popover-foreground: 250 250 250;
-      --muted: 38 38 38;
-      --muted-foreground: 161 161 161;
-      --destructive: 255 100 103;
-      --foreground: 250 250 250;
-      --border: 46 46 46;
-      --input: 46 46 46;
-      --accent: 38 38 38;
-      --accent-foreground: 250 250 250;
-      --ring: 115 115 115;
+   /* ==========================================================================
+     DARK MODE (Inverted: Forest Green Background, Cream Text, Vibrant Gold)
+     ========================================================================== */
+  --background: 4 45 28;             /* Deepened Forest Green (Ensures UI depth) */
+  --foreground: 249 245 235;         /* Cream (#F9F5EB) */
+
+  --primary: 230 195 85;             /* Brightened Gold (Boosts visibility on dark backdrops) */
+  --primary-foreground: 4 45 28;     /* Deep Forest Green (Ensures crisp contrast) */
+
+  --secondary: 20 80 50;             /* Lighter Forest Green (For element container separation) */
+  --secondary-foreground: 249 245 235;/* Cream (#F9F5EB) */
+
+  --card: 6 54 34;                   /* Slightly lighter Green container */
+  --card-foreground: 249 245 235;    /* Cream (#F9F5EB) */
+
+  --popover: 6 54 34;                /* Slightly lighter Green container */
+  --popover-foreground: 249 245 235; /* Cream (#F9F5EB) */
+
+  --muted: 12 65 42;                 /* Mid-tone Green */
+  --muted-foreground: 180 195 185;   /* Soft Sage Gray-Green */
+
+  --accent: 12 65 42;                /* Mid-tone Green */
+  --accent-foreground: 249 245 235;  /* Cream (#F9F5EB) */
+
+  --destructive: 239 68 68;          /* Vibrant Accessible Red */
+  --destructive-foreground: 255 255 255; /* White */
+
+  --border: 15 75 48;                /* Subtle Dark Green Border */
+  --input: 15 75 48;                 /* Subtle Dark Green Input Field */
+  --ring: 230 195 85;                /* Brightened Gold */
     }
-  }
-
-  /* Web-only: higher specificity (0,2,0) overrides the media query (0,1,0).
-     GluestackUIProvider adds .dark or .light to <html> on every toggle. */
-  :root.dark {
-    --primary: 255 245 245;
-    --primary-foreground: 23 23 23;
-    --card: 23 23 23;
-    --secondary: 38 38 38;
-    --secondary-foreground: 250 250 250;
-    --background: 10 10 10;
-    --popover: 23 23 23;
-    --popover-foreground: 250 250 250;
-    --muted: 38 38 38;
-    --muted-foreground: 161 161 161;
-    --destructive: 255 100 103;
-    --foreground: 250 250 250;
-    --border: 46 46 46;
-    --input: 46 46 46;
-    --accent: 38 38 38;
-    --accent-foreground: 250 250 250;
-    --ring: 115 115 115;
-  }
-
-  :root.light {
-    --primary: 23 23 23;
-    --primary-foreground: 250 250 250;
-    --card: 255 255 255;
-    --secondary: 245 245 245;
-    --secondary-foreground: 23 23 23;
-    --background: 255 255 255;
-    --popover: 255 255 255;
-    --popover-foreground: 10 10 10;
-    --muted: 245 245 245;
-    --muted-foreground: 115 115 115;
-    --destructive: 231 0 11;
-    --foreground: 10 10 10;
-    --border: 229 229 229;
-    --input: 229 229 229;
-    --ring: 212 212 212;
-    --accent: 247 247 247;
-    --accent-foreground: 52 52 52;
   }
 }
 

@@ -1,6 +1,6 @@
 import { Fab, FabIcon } from '@/components/ui/fab';
 import { GluestackUIProvider } from '@/components/ui/gluestack-ui-provider';
-import { MoonIcon, SunIcon } from '@/components/ui/icon';
+import { EditIcon, Icon, MoonIcon, SunIcon } from '@/components/ui/icon';
 import './global.css';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import {
@@ -9,11 +9,15 @@ import {
   ThemeProvider,
 } from '@react-navigation/native';
 import { useFonts } from 'expo-font';
-import { Slot, Stack, usePathname } from 'expo-router';
+import { Slot, Stack, Tabs, usePathname } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect, useState } from 'react';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { QueryClientProvider, } from '@tanstack/react-query'
+import { queryClient } from '@/lib/query-client';
+import { setupReactQuery } from '@/lib/react-query';
+import { ChartBarStacked, Home } from 'lucide-react-native';
 
 export {
   // Catch any errors thrown by the Layout component.
@@ -41,29 +45,78 @@ export default function RootLayout() {
   return <RootLayoutNav />;
 }
 
+
 function RootLayoutNav() {
+
   const pathname = usePathname();
   const [colorMode, setColorMode] = useState<'light' | 'dark' | 'system'>('light');
+
+
+  useEffect(() => {  // react-query to track network status
+    setupReactQuery();
+  }, []);
 
   return (
     <ThemeProvider value={colorMode === 'dark' ? DarkTheme : DefaultTheme}>
       <GestureHandlerRootView style={{ flex: 1 }}>
         <GluestackUIProvider mode={colorMode}>
           <StatusBar style={colorMode === 'dark' ? 'light' : 'dark'} />
-          <Stack />
 
-          
-          {/* {pathname === '/' && (
-            <Fab
-              onPress={() =>
-                setColorMode(colorMode === 'dark' ? 'light' : 'dark')
-              }
-              className="m-6"
-              size="lg"
-            >
-              <FabIcon as={colorMode === 'dark' ? MoonIcon : SunIcon} />
-            </Fab>
-          )} */}
+          <QueryClientProvider client={queryClient}>
+
+
+            {/* <Stack>
+              <Stack.Screen name="index" options={{headerShown: false}} />
+              <Stack.Screen name="second" options={{ title: 'Second Page', animation: 'slide_from_bottom' }} />
+              <Stack.Screen name="products/index" options={{ title: 'Products Page' }} />
+            </Stack> */}
+
+
+            <Tabs screenOptions={{
+              tabBarActiveTintColor: 'tomato',
+              tabBarInactiveTintColor: 'gray',
+            }}>
+              <Tabs.Screen
+                name="(home)"
+                options={{
+                  title: 'Home',
+                  headerShown: false,
+                  tabBarIcon: ({ color, size }) => <Icon as={Home} color={color} />,
+                  // tabBarLabel: 'Home'
+                }} />
+              <Tabs.Screen
+                name="second"
+                options={{
+                  title: 'Second Page',
+                  headerShown: false,
+                  tabBarLabel: 'Second',
+                  tabBarIcon: ({ color, size }) => <Icon as={EditIcon} color={color} />
+                }} />
+              <Tabs.Screen
+                name="products/index"
+                options={{
+                  title: 'Products',
+                  tabBarBadge: 3,
+                  tabBarIcon: ({ color, size }) => <Icon as={ChartBarStacked} color={color} />
+                }} />
+              
+              <Tabs.Screen name="products/[productId]" options={{ href: null }} />
+              <Tabs.Screen name="+not-found" options={{ href: null, }} />
+            </Tabs>
+
+
+          </QueryClientProvider>
+
+
+          {/* <Fab
+            onPress={() =>
+              setColorMode(colorMode === 'dark' ? 'light' : 'dark')
+            }
+            className="m-6"
+            size="lg"
+          >
+            <FabIcon as={colorMode === 'dark' ? MoonIcon : SunIcon} />
+          </Fab> */}
         </GluestackUIProvider>
       </GestureHandlerRootView>
     </ThemeProvider>

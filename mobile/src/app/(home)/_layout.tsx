@@ -1,0 +1,15 @@
+import React from 'react'
+import { Box } from '@/components/ui/box'
+import { Center } from '@/components/ui/center'
+import { Text } from '@/components/ui/text'
+import { Stack } from 'expo-router'
+
+export default function HomeLayout() {
+    return (
+        <Stack>
+            <Stack.Screen name="index" options={{ title: 'Home' }} />
+            <Stack.Screen name="home-nested" options={{ title: 'Home Nested' }} />
+
+      </Stack>
+  )
+}
