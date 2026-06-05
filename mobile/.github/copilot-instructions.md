@@ -11,3 +11,6 @@
 VS Code Shortcuts:
 - Ctrl + K W -> to close all tabs
 - Ctrl + W -> to close current tab
+
+# Skill Priority
+- For Expo UI, navigation, styling, animation, and native component tasks, prefer the local skill: .github/skills/building-native-ui/SKILL.md

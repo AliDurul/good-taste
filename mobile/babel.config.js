@@ -3,15 +3,13 @@ module.exports = function (api) {
 
   return {
     presets: ['babel-preset-expo'],
-
     plugins: [
       [
         'module-resolver',
         {
-          root: ['./'],
-
+          root: ['./src'],
           alias: {
-            '@': './',
+            '@': './src',
             'tailwind.config': './tailwind.config.js',
           },
         },

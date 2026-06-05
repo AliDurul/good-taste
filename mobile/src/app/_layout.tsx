@@ -1,7 +1,7 @@
 import { Fab, FabIcon } from '@/components/ui/fab';
 import { GluestackUIProvider } from '@/components/ui/gluestack-ui-provider';
 import { MoonIcon, SunIcon } from '@/components/ui/icon';
-import '@/global.css';
+import './global.css';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import {
   DarkTheme,
@@ -9,7 +9,7 @@ import {
   ThemeProvider,
 } from '@react-navigation/native';
 import { useFonts } from 'expo-font';
-import { Slot, usePathname } from 'expo-router';
+import { Slot, Stack, usePathname } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect, useState } from 'react';
@@ -24,7 +24,7 @@ SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
   const [loaded, error] = useFonts({
-    SpaceMono: require('../assets/fonts/SpaceMono-Regular.ttf'),
+    SpaceMono: require('../../assets/fonts/SpaceMono-Regular.ttf'),
     ...FontAwesome.font,
   });
 
@@ -43,15 +43,17 @@ export default function RootLayout() {
 
 function RootLayoutNav() {
   const pathname = usePathname();
-  const [colorMode, setColorMode] = useState<'light' | 'dark' | 'system'>('dark');
+  const [colorMode, setColorMode] = useState<'light' | 'dark' | 'system'>('light');
 
   return (
     <ThemeProvider value={colorMode === 'dark' ? DarkTheme : DefaultTheme}>
       <GestureHandlerRootView style={{ flex: 1 }}>
         <GluestackUIProvider mode={colorMode}>
           <StatusBar style={colorMode === 'dark' ? 'light' : 'dark'} />
-          <Slot />
-          {pathname === '/' && (
+          <Stack />
+
+          
+          {/* {pathname === '/' && (
             <Fab
               onPress={() =>
                 setColorMode(colorMode === 'dark' ? 'light' : 'dark')
@@ -61,7 +63,7 @@ function RootLayoutNav() {
             >
               <FabIcon as={colorMode === 'dark' ? MoonIcon : SunIcon} />
             </Fab>
-          )}
+          )} */}
         </GluestackUIProvider>
       </GestureHandlerRootView>
     </ThemeProvider>
