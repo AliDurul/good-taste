@@ -123,9 +123,14 @@ export const auth = betterAuth({
     trustedOrigins: [
         process.env.WEB_FRONTEND_URL!,
         "http://10.0.2.2:8000", // For Android emulator accessing backend
-        // "http://192.168.1.x:3000", // For physical devices on local network
-        // "myapp://", // Your mobile app scheme (for deep links)
 
+      	...(process.env.NODE_ENV === "development" ? [
+			"exp://**", // Expo dev client
+			"exp://192.168.*.*:*/**", // Local network
+		] : [
+			"myapp://*",
+			"https://your-web-domain.com", // If web version exists
+		])
     ],
     secret: process.env.BETTER_AUTH_SECRET!,
     baseURL: process.env.BASE_URL!,

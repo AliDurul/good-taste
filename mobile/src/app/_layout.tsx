@@ -18,6 +18,10 @@ import { QueryClientProvider, } from '@tanstack/react-query'
 import { queryClient } from '@/lib/query-client';
 import { setupReactQuery } from '@/lib/react-query';
 import { ChartBarStacked, Home } from 'lucide-react-native';
+import { authClient } from '@/lib/auth-client';
+import { Box } from '@/components/ui/box';
+import { Spinner } from '@/components/ui/spinner';
+import useGlobalStore from '@/stores/globalStore';
 
 export {
   // Catch any errors thrown by the Layout component.
@@ -47,76 +51,56 @@ export default function RootLayout() {
 
 
 function RootLayoutNav() {
+  const { onboardingCompleted } = useGlobalStore();
 
-  const pathname = usePathname();
   const [colorMode, setColorMode] = useState<'light' | 'dark' | 'system'>('light');
 
+  const { data: session, isPending } = authClient.useSession();
 
-  useEffect(() => {  // react-query to track network status
-    setupReactQuery();
-  }, []);
+
+  // useEffect(() => {
+  //   setupReactQuery();
+  // }, []);
+
+
+  // if (isPending) {
+  //   return (
+  //     <GluestackUIProvider mode={colorMode} >
+  //       <Box className="flex-1 items-center justify-center" >
+  //         <Spinner color={colorMode === 'dark' ? 'white' : 'black'} size="large" />
+  //       </Box>
+  //     </GluestackUIProvider>
+  //   );
+  // }
+
 
   return (
     <ThemeProvider value={colorMode === 'dark' ? DarkTheme : DefaultTheme}>
       <GestureHandlerRootView style={{ flex: 1 }}>
         <GluestackUIProvider mode={colorMode}>
-          <StatusBar style={colorMode === 'dark' ? 'light' : 'dark'} />
+
+          {/* <StatusBar style={colorMode === 'dark' ? 'light' : 'dark'} /> */}
 
           <QueryClientProvider client={queryClient}>
 
+            <Stack>
+              <Stack.Protected guard={!!session}>
+                <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+                <Stack.Screen name="modal" options={{ presentation: 'modal', headerShown: false, animation: 'slide_from_bottom' }} />
+              </Stack.Protected>
 
-            {/* <Stack>
-              <Stack.Screen name="index" options={{headerShown: false}} />
-              <Stack.Screen name="second" options={{ title: 'Second Page', animation: 'slide_from_bottom' }} />
-              <Stack.Screen name="products/index" options={{ title: 'Products Page' }} />
-            </Stack> */}
+              <Stack.Protected guard={!session && onboardingCompleted}>
+                <Stack.Screen name="login" options={{ headerShown: false }} />
+                <Stack.Screen name="register" options={{ headerShown: false }} />
+              </Stack.Protected>
 
-
-            <Tabs screenOptions={{
-              tabBarActiveTintColor: 'tomato',
-              tabBarInactiveTintColor: 'gray',
-            }}>
-              <Tabs.Screen
-                name="(home)"
-                options={{
-                  title: 'Home',
-                  headerShown: false,
-                  tabBarIcon: ({ color, size }) => <Icon as={Home} color={color} />,
-                  // tabBarLabel: 'Home'
-                }} />
-              <Tabs.Screen
-                name="second"
-                options={{
-                  title: 'Second Page',
-                  headerShown: false,
-                  tabBarLabel: 'Second',
-                  tabBarIcon: ({ color, size }) => <Icon as={EditIcon} color={color} />
-                }} />
-              <Tabs.Screen
-                name="products/index"
-                options={{
-                  title: 'Products',
-                  tabBarBadge: 3,
-                  tabBarIcon: ({ color, size }) => <Icon as={ChartBarStacked} color={color} />
-                }} />
-              
-              <Tabs.Screen name="products/[productId]" options={{ href: null }} />
-              <Tabs.Screen name="+not-found" options={{ href: null, }} />
-            </Tabs>
-
+              <Stack.Protected guard={!onboardingCompleted}>
+                <Stack.Screen name="onboarding" options={{ headerShown: false }} />
+              </Stack.Protected>
+            </Stack>
 
           </QueryClientProvider>
 
-
-          {/* <Fab
-            onPress={() =>
-              setColorMode(colorMode === 'dark' ? 'light' : 'dark')
-            }
-            className="m-6"
-            size="lg"
-          >
-            <FabIcon as={colorMode === 'dark' ? MoonIcon : SunIcon} />
-          </Fab> */}
         </GluestackUIProvider>
       </GestureHandlerRootView>
     </ThemeProvider>

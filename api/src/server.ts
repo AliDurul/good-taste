@@ -11,6 +11,7 @@ const app: Express = express()
 app.use(cors({
     origin: process.env.TRUSTED_ORIGINS?.split(',').map(origin => origin.trim()) || [],
     credentials: true,
+    exposedHeaders: ["set-cookie"],
 }));
 app.all("/api/v1/auth/*splat", toNodeHandler(auth)); // Better Auth middleware
 app.use('/api/v1/uploads', express.static('uploads')); // Serve uploaded files
