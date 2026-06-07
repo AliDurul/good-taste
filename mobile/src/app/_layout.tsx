@@ -92,6 +92,7 @@ function RootLayoutNav() {
               <Stack.Protected guard={!session && onboardingCompleted}>
                 <Stack.Screen name="login" options={{ headerShown: false }} />
                 <Stack.Screen name="register" options={{ headerShown: false }} />
+                <Stack.Screen name="location-picker" options={{ presentation: 'modal', headerShown: false }} />
               </Stack.Protected>
 
               <Stack.Protected guard={!onboardingCompleted}>

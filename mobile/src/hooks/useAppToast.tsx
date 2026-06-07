@@ -5,6 +5,10 @@ import {
     ToastTitle,
     useToast,
 } from '@/components/ui/toast';
+import { HStack } from '@/components/ui/hstack';
+import { HelpCircleIcon } from 'lucide-react-native';
+import { Icon } from '@/components/ui/icon';
+import { VStack } from '@/components/ui/vstack';
 
 type ToastAction = 'success' | 'error' | 'warning' | 'info';
 
@@ -60,13 +64,18 @@ export function useAppToast(): UseAppToast {
             toast.show({
                 id,
                 placement: options?.placement ?? 'top',
-                duration: options?.duration ?? 3000,
+                duration: options?.duration ?? 5000,
                 render: ({ id: renderId }) => {
                     const uniqueId = `toast-${renderId}`;
                     return (
-                        <Toast nativeID={uniqueId} action={action} variant="solid">
-                            {title ? <ToastTitle>{title}</ToastTitle> : null}
-                            <ToastDescription>{message}</ToastDescription>
+                        <Toast nativeID={uniqueId} className='' action={action} variant="solid">
+                            <HStack space='md'>
+                                {action === 'error' && <Icon as={HelpCircleIcon} className="text-red-500 mt-0.5" />}
+                                <VStack space='xs'>
+                                    {title ? <ToastTitle>{title}</ToastTitle> : null}
+                                    <ToastDescription>{message}</ToastDescription>
+                                </VStack>
+                            </HStack>
                         </Toast>
                     );
                 },
@@ -79,11 +88,9 @@ export function useAppToast(): UseAppToast {
 
     return useMemo<UseAppToast>(
         () => ({
-            success: (message, options) =>
-                showWithAction('success', message, options),
+            success: (message, options) => showWithAction('success', message, options),
             error: (message, options) => showWithAction('error', message, options),
-            warning: (message, options) =>
-                showWithAction('warning', message, options),
+            warning: (message, options) => showWithAction('warning', message, options),
             info: (message, options) => showWithAction('info', message, options),
         }),
         [showWithAction]

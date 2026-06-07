@@ -50,7 +50,7 @@ export default function Login() {
         }
 
         // await authClient.getSession();
-        toast.success('Welcome back!');
+        // toast.success('Welcome back!');
         router.replace("/");
     };
 
@@ -151,7 +151,7 @@ export default function Login() {
                     <Box className="flex-row items-center gap-1">
                         <Text size="sm" className="text-secondary-foreground">Don't have an account?</Text>
                         <Pressable onPress={() => router.push('/register')}>
-                            <Text size="sm" className="text-primary/80 font-medium">Register</Text>
+                            <Text size="sm" className="text-primary/80 font-medium underline">Register</Text>
                         </Pressable>
                     </Box>
 
