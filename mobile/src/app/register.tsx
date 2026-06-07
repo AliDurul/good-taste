@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
 import { KeyboardAvoidingView, Platform, Pressable, ScrollView, View } from 'react-native'
+import * as Location from 'expo-location'
 import { Box } from '@/components/ui/box'
 import { Heading } from '@/components/ui/heading'
 import { Text } from '@/components/ui/text'
@@ -14,34 +15,39 @@ import {
     FormControlLabel,
     FormControlLabelText,
 } from '@/components/ui/form-control'
+import {
+    Select,
+    SelectBackdrop,
+    SelectContent,
+    SelectDragIndicator,
+    SelectDragIndicatorWrapper,
+    SelectIcon,
+    SelectInput,
+    SelectItem,
+    SelectPortal,
+    SelectTrigger,
+} from '@/components/ui/select'
 import { Progress, ProgressFilledTrack } from '@/components/ui/progress'
 import { DateTimePicker, DateTimePickerInput, DateTimePickerTrigger, DateTimePickerIcon } from '@/components/ui/date-time-picker'
-import { CalendarDays } from 'lucide-react-native'
 import { useRouter } from 'expo-router'
 import { Controller, useForm } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { SignUpForm, signUpSchema } from '@/zod/auth'
 import {
     ArrowRight,
-    CheckCircle2,
+    CalendarDays,
+    ChevronDown,
+    Crosshair,
     Eye,
     EyeClosed,
+    Globe,
     Lock,
     Mail,
     MapPin,
-    Phone,
-    Tag,
     User,
 } from 'lucide-react-native'
-
-type RegisterFormData = {
-    fullName: string
-    phone: string
-    email: string
-    password: string
-    confirmPassword: string
-    town: string
-    dateOfBirth: string
-    referralCode: string
-}
+import { authClient } from '@/lib/auth-client'
+import useAppToast from '@/hooks/useAppToast'
 
 function getPasswordStrength(password: string): { label: string; color: string; width: string } {
     if (!password) return { label: '', color: '', width: 'w-0' }
@@ -55,32 +61,38 @@ function getPasswordStrength(password: string): { label: string; color: string; 
     return { label: 'Strong', color: 'bg-green-500', width: 'w-full' }
 }
 
-const VALID_REFERRAL = 'GOODTASTE2024'
+const COUNTRIES = ['Zambia', 'Zimbabwe', 'Malawi', 'Tanzania']
+const CITIES = ['Lusaka', 'Ndola', 'Kitwe', 'Livingstone']
 
 export default function Register() {
-    const router = useRouter()
+    const router = useRouter();
+    const toast = useAppToast();
     const [step, setStep] = useState<1 | 2>(1)
     const [showPass, setShowPass] = useState(false)
     const [showConfirm, setShowConfirm] = useState(false)
-    const [referralStatus, setReferralStatus] = useState<'idle' | 'valid' | 'invalid'>('idle')
+    const [locating, setLocating] = useState(false)
+    const [locationError, setLocationError] = useState<string | null>(null)
+    const [address, setAddress] = useState<string | null>(null)
 
     const {
         control,
         handleSubmit,
         trigger,
         watch,
-        getValues,
         formState: { errors, isSubmitting },
-    } = useForm<RegisterFormData>({
+    } = useForm<SignUpForm>({
+        resolver: zodResolver(signUpSchema),
         defaultValues: {
-            fullName: '',
+            name: '',
             phone: '',
             email: '',
             password: '',
             confirmPassword: '',
+            country: '',
+            city: '',
             town: '',
-            dateOfBirth: '',
-            referralCode: '',
+            // location: undefined,
+            birthday: '',
         },
     })
 
@@ -88,19 +100,68 @@ export default function Register() {
     const strength = getPasswordStrength(passwordValue)
 
     const handleNext = async () => {
-        const valid = await trigger(['fullName', 'phone', 'password', 'confirmPassword'])
+        const valid = await trigger(['name', 'phone', 'password', 'confirmPassword'])
         if (valid) setStep(2)
     }
 
-    const handleRegister = async (data: RegisterFormData) => {
+    const handleRegister = async (data: SignUpForm) => {
         console.log('Register:', data)
-        // TODO: call auth API
-        router.replace('/')
+        const { error } = await authClient.signUp.email({
+            name: data.name,
+            phone: data.phone,
+            email: data.email,
+            password: data.password,
+            country: data.country,
+            city: data.city,
+            town: data.town,
+            birthday: data.birthday ,
+            address: 'phi',
+        });
+
+        if (error) {
+            console.error('Login error:', error);
+            toast.error(error.message ?? 'Registration failed', { title: 'Registration failed' });
+            return;
+        }
+
+        router.replace("/");
     }
 
-    const checkReferral = (code: string) => {
-        if (!code) { setReferralStatus('idle'); return }
-        setReferralStatus(code.toUpperCase() === VALID_REFERRAL ? 'valid' : 'invalid')
+    const captureLocation = async (
+        onChange: (value: { latitude: number; longitude: number }) => void,
+    ) => {
+        setLocationError(null)
+        setLocating(true)
+        try {
+            const { status } = await Location.requestForegroundPermissionsAsync()
+            if (status !== 'granted') {
+                setLocationError('Location permission denied. Please enable it in settings.')
+                return
+            }
+            const pos = await Location.getCurrentPositionAsync({})
+            const coords = { latitude: pos.coords.latitude, longitude: pos.coords.longitude }
+            console.log('Location permission status:', coords)
+
+            onChange(coords)
+
+            try {
+                const [place] = await Location.reverseGeocodeAsync(coords)
+                console.log('Reverse geocoded place:', place)
+                if (place) {
+                    setAddress(
+                        [place.name, place.street, place.city, place.country]
+                            .filter(Boolean)
+                            .join(', '),
+                    )
+                }
+            } catch {
+                // reverse geocoding is best-effort; coords are still captured
+            }
+        } catch {
+            setLocationError('Could not get your location. Please try again.')
+        } finally {
+            setLocating(false)
+        }
     }
 
     return (
@@ -117,25 +178,24 @@ export default function Register() {
                             Step {step} of 2
                         </Text>
                         <Progress value={step === 1 ? 50 : 100} className="w-full h-1.5 mt-2 bg-secondary-foreground/20">
-                            <ProgressFilledTrack className="bg-[#917400]" />
+                            <ProgressFilledTrack className="bg-primary" />
                         </Progress>
                     </Box>
 
-                    {step !== 1 ? (
+                    {step === 1 ? (
                         <Box className="w-full gap-5">
                             {/* Full Name */}
-                            <FormControl isInvalid={!!errors.fullName}>
+                            <FormControl isInvalid={!!errors.name}>
                                 <FormControlLabel>
-                                    <FormControlLabelText className={errors.fullName ? 'text-destructive' : 'text-secondary-foreground'}>
+                                    <FormControlLabelText className={errors.name ? 'text-destructive' : 'text-secondary-foreground'}>
                                         Full Name
                                     </FormControlLabelText>
                                 </FormControlLabel>
                                 <Controller
-                                    name="fullName"
+                                    name="name"
                                     control={control}
-                                    rules={{ required: 'Full name is required' }}
                                     render={({ field: { onChange, onBlur, value } }) => (
-                                        <Input className={`bg-secondary-foreground ${errors.fullName ? 'border-2 border-destructive' : ''}`}>
+                                        <Input className={`bg-secondary-foreground ${errors.name ? 'border-2 border-destructive' : ''}`}>
                                             <InputSlot className="pl-3">
                                                 <InputIcon as={User} className="text-muted-foreground" />
                                             </InputSlot>
@@ -149,7 +209,7 @@ export default function Register() {
                                     )}
                                 />
                                 <FormControlError>
-                                    <FormControlErrorText>{errors.fullName?.message}</FormControlErrorText>
+                                    <FormControlErrorText>{errors.name?.message}</FormControlErrorText>
                                 </FormControlError>
                             </FormControl>
 
@@ -163,7 +223,6 @@ export default function Register() {
                                 <Controller
                                     name="phone"
                                     control={control}
-                                    rules={{ required: 'Phone number is required' }}
                                     render={({ field: { onChange, onBlur, value } }) => (
                                         <Input className={`bg-secondary-foreground ${errors.phone ? 'border-2 border-destructive' : ''}`}>
                                             <InputSlot className="pl-3">
@@ -184,25 +243,16 @@ export default function Register() {
                                 </FormControlError>
                             </FormControl>
 
-                            {/* Email (optional) */}
+                            {/* Email */}
                             <FormControl isInvalid={!!errors.email}>
                                 <FormControlLabel>
-                                    <Box className="flex-row items-center gap-2">
-                                        <FormControlLabelText className="text-secondary-foreground">
-                                            Email Address
-                                        </FormControlLabelText>
-                                        <Text size="xs" className="text-secondary-foreground/50">Optional</Text>
-                                    </Box>
+                                    <FormControlLabelText className={errors.email ? 'text-destructive' : 'text-secondary-foreground'}>
+                                        Email Address
+                                    </FormControlLabelText>
                                 </FormControlLabel>
                                 <Controller
                                     name="email"
                                     control={control}
-                                    rules={{
-                                        pattern: {
-                                            value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
-                                            message: 'Enter a valid email address',
-                                        },
-                                    }}
                                     render={({ field: { onChange, onBlur, value } }) => (
                                         <Input className={`bg-secondary-foreground ${errors.email ? 'border-2 border-destructive' : ''}`}>
                                             <InputSlot className="pl-3">
@@ -235,10 +285,6 @@ export default function Register() {
                                 <Controller
                                     name="password"
                                     control={control}
-                                    rules={{
-                                        required: 'Password is required',
-                                        minLength: { value: 6, message: 'Password must be at least 6 characters' },
-                                    }}
                                     render={({ field: { onChange, onBlur, value } }) => (
                                         <Input className={`bg-secondary-foreground ${errors.password ? 'border-2 border-destructive' : ''}`}>
                                             <InputSlot className="pl-3">
@@ -280,10 +326,6 @@ export default function Register() {
                                 <Controller
                                     name="confirmPassword"
                                     control={control}
-                                    rules={{
-                                        required: 'Please confirm your password',
-                                        validate: (val) => val === getValues('password') || 'Passwords do not match',
-                                    }}
                                     render={({ field: { onChange, onBlur, value } }) => (
                                         <Input className={`bg-secondary-foreground ${errors.confirmPassword ? 'border-2 border-destructive' : ''}`}>
                                             <InputSlot className="pl-3">
@@ -307,19 +349,89 @@ export default function Register() {
                                 </FormControlError>
                             </FormControl>
 
-                            <Button className="w-full py-3 bg-[#917400]" size="lg" onPress={handleNext}>
+                            <Button className="w-full py-3 bg-primary" size="lg" onPress={handleNext}>
                                 <ButtonText className="text-secondary-foreground text-lg">Next</ButtonText>
                             </Button>
 
                             <Box className="flex-row items-center justify-center gap-1">
                                 <Text size="sm" className="text-secondary-foreground/60">Already have an account?</Text>
                                 <Pressable onPress={() => router.push('/login')}>
-                                    <Text size="sm" className="text-[#917400] font-bold">Sign in</Text>
+                                    <Text size="sm" className="text-primary font-bold">Sign in</Text>
                                 </Pressable>
                             </Box>
                         </Box>
                     ) : (
                         <Box className="w-full gap-5">
+                            {/* Country */}
+                            <FormControl isInvalid={!!errors.country}>
+                                <FormControlLabel>
+                                    <FormControlLabelText className={errors.country ? 'text-destructive' : 'text-secondary-foreground'}>
+                                        Country
+                                    </FormControlLabelText>
+                                </FormControlLabel>
+                                <Controller
+                                    name="country"
+                                    control={control}
+                                    render={({ field: { onChange, value } }) => (
+                                        <Select selectedValue={value} onValueChange={onChange}>
+                                            <SelectTrigger size={'lg'} className={`bg-secondary-foreground ${errors.country ? 'border-2 border-destructive' : ''}`}>
+                                                <SelectInput placeholder="Select country" className="flex-1" />
+                                                <SelectIcon as={ChevronDown} className="mr-3 text-muted-foreground" />
+                                            </SelectTrigger>
+                                            <SelectPortal>
+                                                <SelectBackdrop />
+                                                <SelectContent>
+                                                    <SelectDragIndicatorWrapper>
+                                                        <SelectDragIndicator />
+                                                    </SelectDragIndicatorWrapper>
+                                                    {COUNTRIES.map((c) => (
+                                                        <SelectItem key={c} label={c} value={c} />
+                                                    ))}
+                                                </SelectContent>
+                                            </SelectPortal>
+                                        </Select>
+                                    )}
+                                />
+                                <FormControlError>
+                                    <FormControlErrorText>{errors.country?.message}</FormControlErrorText>
+                                </FormControlError>
+                            </FormControl>
+
+                            {/* City */}
+                            <FormControl isInvalid={!!errors.city}>
+                                <FormControlLabel>
+                                    <FormControlLabelText className={errors.city ? 'text-destructive' : 'text-secondary-foreground'}>
+                                        City
+                                    </FormControlLabelText>
+                                </FormControlLabel>
+                                <Controller
+                                    name="city"
+                                    control={control}
+                                    render={({ field: { onChange, value } }) => (
+                                        <Select selectedValue={value} onValueChange={onChange}>
+                                            <SelectTrigger size={'lg'} className={`bg-secondary-foreground ${errors.city ? 'border-2 border-destructive' : ''}`}>
+                                                <SelectInput placeholder="Select city" className="flex-1" />
+                                                <SelectIcon as={ChevronDown} className="mr-3 text-muted-foreground" />
+                                            </SelectTrigger>
+                                            <SelectPortal>
+                                                <SelectBackdrop />
+                                                <SelectContent>
+                                                    <SelectDragIndicatorWrapper>
+                                                        <SelectDragIndicator />
+                                                    </SelectDragIndicatorWrapper>
+                                                    {CITIES.map((c) => (
+                                                        <SelectItem key={c} label={c} value={c} />
+                                                    ))}
+                                                </SelectContent>
+                                            </SelectPortal>
+                                        </Select>
+                                    )}
+                                />
+                                <FormControlError>
+                                    <FormControlErrorText>{errors.city?.message}</FormControlErrorText>
+                                </FormControlError>
+                            </FormControl>
+
                             {/* Town / Area */}
                             <FormControl isInvalid={!!errors.town}>
                                 <FormControlLabel>
@@ -330,7 +442,6 @@ export default function Register() {
                                 <Controller
                                     name="town"
                                     control={control}
-                                    rules={{ required: 'Town or area is required' }}
                                     render={({ field: { onChange, onBlur, value } }) => (
                                         <Input className={`bg-secondary-foreground ${errors.town ? 'border-2 border-destructive' : ''}`}>
                                             <InputSlot className="pl-3">
@@ -350,6 +461,56 @@ export default function Register() {
                                 </FormControlError>
                             </FormControl>
 
+                            {/* Map location */}
+                            {/* <FormControl isInvalid={!!errors.location}>
+                                <FormControlLabel>
+                                    <FormControlLabelText className={errors.location ? 'text-destructive' : 'text-secondary-foreground'}>
+                                        Map Location
+                                    </FormControlLabelText>
+                                </FormControlLabel>
+                                <Controller
+                                    name="location"
+                                    control={control}
+                                    render={({ field: { onChange, value } }) => (
+                                        <Box className="gap-2">
+                                            <Button
+                                                variant="outline"
+                                                className={`w-full h-13 justify-start bg-secondary-foreground ${errors.location ? 'border-2 border-destructive' : ''}`}
+                                                disabled={locating}
+                                                onPress={() => captureLocation(onChange)}
+                                            >
+                                                {locating ? (
+                                                    <ButtonSpinner className="text-primary" />
+                                                ) : (
+                                                    <ButtonIcon as={value ? Globe : Crosshair} className="text-primary" />
+                                                )}
+                                                <ButtonText className="text-foreground text-base">
+                                                    {value ? 'Update my location' : 'Use my current location'}
+                                                </ButtonText>
+                                            </Button>
+                                            {value ? (
+                                                <Box className="rounded-md bg-secondary-foreground/10 px-3 py-2 gap-0.5">
+                                                    <Text selectable size="sm" className="text-secondary-foreground font-medium">
+                                                        {value.latitude.toFixed(6)}, {value.longitude.toFixed(6)}
+                                                    </Text>
+                                                    {address ? (
+                                                        <Text size="xs" className="text-secondary-foreground/60">{address}</Text>
+                                                    ) : null}
+                                                </Box>
+                                            ) : null}
+                                        </Box>
+                                    )}
+                                />
+                                {locationError && (
+                                    <FormControlHelper>
+                                        <FormControlHelperText className="text-destructive">{locationError}</FormControlHelperText>
+                                    </FormControlHelper>
+                                )}
+                                <FormControlError>
+                                    <FormControlErrorText>{errors.location?.message}</FormControlErrorText>
+                                </FormControlError>
+                            </FormControl> */}
+
                             {/* Date of Birth */}
                             <FormControl>
                                 <FormControlLabel>
@@ -358,7 +519,7 @@ export default function Register() {
                                     </FormControlLabelText>
                                 </FormControlLabel>
                                 <Controller
-                                    name="dateOfBirth"
+                                    name="birthday"
                                     control={control}
                                     render={({ field: { onChange, value } }) => (
                                         <DateTimePicker
@@ -383,47 +544,8 @@ export default function Register() {
                                 </FormControlHelper>
                             </FormControl>
 
-                            {/* Referral Code */}
-                            <FormControl>
-                                <FormControlLabel>
-                                    <FormControlLabelText className="text-secondary-foreground">
-                                        Referral Code
-                                    </FormControlLabelText>
-                                </FormControlLabel>
-                                <Controller
-                                    name="referralCode"
-                                    control={control}
-                                    render={({ field: { onChange, onBlur, value } }) => (
-                                        <Input className="bg-secondary-foreground">
-                                            <InputSlot className="pl-3">
-                                                <InputIcon as={Tag} className="text-muted-foreground" />
-                                            </InputSlot>
-                                            <InputField
-                                                placeholder="GOODTASTE2024"
-                                                autoCapitalize="characters"
-                                                autoCorrect={false}
-                                                onChangeText={onChange}
-                                                onBlur={() => { onBlur(); checkReferral(value) }}
-                                                value={value}
-                                            />
-                                            {referralStatus === 'valid' && (
-                                                <InputSlot className="pr-3">
-                                                    <InputIcon as={CheckCircle2} className="text-green-500" />
-                                                </InputSlot>
-                                            )}
-                                        </Input>
-                                    )}
-                                />
-                                {referralStatus === 'valid' && (
-                                    <Text size="xs" className="text-green-500 mt-1">Code applied successfully.</Text>
-                                )}
-                                {referralStatus === 'invalid' && (
-                                    <Text size="xs" className="text-destructive mt-1">Invalid referral code.</Text>
-                                )}
-                            </FormControl>
-
                             <Button
-                                className="w-full py-3 bg-[#917400]"
+                                className="w-full py-3 bg-primary"
                                 size="lg"
                                 disabled={isSubmitting}
                                 onPress={handleSubmit(handleRegister)}
@@ -447,9 +569,9 @@ export default function Register() {
 
                             <Text size="xs" className="text-center text-secondary-foreground/40 px-4">
                                 By creating an account, you agree to our{' '}
-                                <Text size="xs" className="text-[#917400]">Terms of Service</Text>
+                                <Text size="xs" className="text-primary">Terms of Service</Text>
                                 {' '}and{' '}
-                                <Text size="xs" className="text-[#917400]">Privacy Policy</Text>.
+                                <Text size="xs" className="text-primary">Privacy Policy</Text>.
                             </Text>
                         </Box>
                     )}

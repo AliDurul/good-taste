@@ -11,9 +11,9 @@ POST {{baseurl}}/auth/sign-up/email
 Content-Type: application/json
 
 {
-  "email": "customer11@test.com",
-  "password": "pass1234",
-  "name": "customer 11",
+  "email": "customer20@test.com",
+  "password": "Pass1234",
+  "name": "customer 20",
   "phone": "1234567898",
   "birthday": "1990-01-01"
 }

@@ -4882,6 +4882,13 @@ expo-linking@~55.0.7:
     expo-constants "~55.0.7"
     invariant "^2.2.4"
 
+expo-location@~55.1.10:
+  version "55.1.10"
+  resolved "https://registry.npmjs.org/expo-location/-/expo-location-55.1.10.tgz"
+  integrity sha512-MkcFucsZ567Bn8ChElVTYVbOs2QXn27IKaBrVKogw7ZcbooImdj3L/UR6E7s3LkgF33YubKynAp9Opvixdwl7g==
+  dependencies:
+    "@expo/image-utils" "^0.8.14"
+
 expo-modules-autolinking@55.0.24:
   version "55.0.24"
   resolved "https://registry.npmjs.org/expo-modules-autolinking/-/expo-modules-autolinking-55.0.24.tgz"

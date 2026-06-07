@@ -37,6 +37,7 @@
     "expo-font": "~55.0.1",
     "expo-glass-effect": "~55.0.7",
     "expo-linking": "~55.0.7",
+    "expo-location": "~55.1.10",
     "expo-network": "^56.0.5",
     "expo-router": "~55.0.4",
     "expo-screen-orientation": "~55.0.8",

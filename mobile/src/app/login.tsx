@@ -18,11 +18,15 @@ import { useForm, Controller } from "react-hook-form";
 import { Eye, EyeClosed } from 'lucide-react-native'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { SignInForm, signInSchema } from '@/zod/auth'
+import { useAppToast } from '@/hooks/useAppToast'
 
 
 export default function Login() {
 
     const [showPass, setShowPass] = React.useState(false);
+    const router = useRouter();
+    const toast = useAppToast();
+
 
     const { control, handleSubmit, formState: { errors, isSubmitting } } = useForm<SignInForm>({
         resolver: zodResolver(signInSchema),
@@ -32,7 +36,6 @@ export default function Login() {
         }
     });
 
-    const router = useRouter();
 
     const handleSignIn = async (data: SignInForm) => {
         const { error } = await authClient.signIn.email({
@@ -42,10 +45,12 @@ export default function Login() {
 
         if (error) {
             console.error('Login error:', error);
+            toast.error(error.message ?? 'Sign in failed', { title: 'Login failed' });
             return;
         }
 
-        await authClient.getSession();
+        // await authClient.getSession();
+        toast.success('Welcome back!');
         router.replace("/");
     };
 
