@@ -62,7 +62,7 @@ export default function Login() {
                 <Box className="flex-1 items-center justify-center bg-[#022e1f] px-6 py-12 gap-6">
 
                     <Image
-                        source={{ uri: 'https://images.unsplash.com/photo-1472214103451-9374bd1c798e?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80' }}
+                        source={{ uri: 'https://images.unsplash.com/photo-1472214103451-9374bd1c798e?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=200&q=80' }}
                         style={{ width: 200, height: 200, borderRadius: 24 }}
                         resizeMode="contain"
                     />

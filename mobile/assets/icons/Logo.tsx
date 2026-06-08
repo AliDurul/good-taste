@@ -1,7 +1,7 @@
 import React from 'react';
 import { Svg, Path, Rect, Defs, LinearGradient, Stop } from 'react-native-svg';
 
-const YourSvgComponent = () => {
+const Logo = () => {
   return (
     <Svg width="188" height="31" viewBox="0 0 188 31" fill="none">
       <Rect
@@ -48,4 +48,4 @@ const YourSvgComponent = () => {
   );
 };
 
-export default YourSvgComponent;
+export default Logo;

@@ -20,7 +20,8 @@ export const authClient = createAuthClient({
                 city: { type: "string" },
                 country: { type: "string" },
                 birthday: { type: "string", required: false },
-                town: { type: 'string' }
+                town: { type: 'string' },
+                role: { type: "string", required: false }
             }
         })
     ]

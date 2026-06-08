@@ -36,6 +36,9 @@ export default function TabsLayout() {
                 }} />
 
             <Tabs.Screen name='products/[productId]' options={{ headerShown: false, href: null }} />
+
+            <Tabs.Screen name='categories/index' options={{ title: 'Categories', href: null }} />
+            <Tabs.Screen name='users/index' options={{ title: 'Users', href: null }} />
         </Tabs>
     )
 }

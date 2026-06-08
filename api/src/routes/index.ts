@@ -13,6 +13,8 @@ import walletTransactionRoutes from "./wallet-transaction.route";
 
 const router: Router = Router();
 
+// URL: /api/v1
+
 // auth
 // router.use('/', authRoutes);
 

@@ -10,24 +10,11 @@ import { authClient } from '@/lib/auth-client';
 export default function HomePage() {
   const router = useRouter();
 
-  function handleAlert(message: string) {
-    Alert.alert('Confirmation', message, [
-      {
-        text: 'Cancel',
-        style: 'cancel',
-      },
-      {
-        text: 'OK',
-        onPress: () => router.push('/second'),
-      },
-    ]);
-  }
 
   const logout = async () => {
     await authClient.signOut();
-
-    console.log('Logged out, current cookie:', authClient.getCookie())
   };
+
   return (
     <Box className="flex-1 bg-background">
 
@@ -41,15 +28,22 @@ export default function HomePage() {
           <ButtonText>Go to nested home</ButtonText>
         </Button>
 
-        <Button variant='outline' onPress={() => {
-          handleAlert('Go to second page?');
-        }}>
-          <ButtonText>Go to second</ButtonText>
-        </Button>
 
         <Link href="/modal" asChild>
           <Button variant='secondary'>
             <ButtonText>Go to modal</ButtonText>
+          </Button>
+        </Link>
+
+        <Link href="/categories" asChild>
+          <Button variant='outline'>
+            <ButtonText>Go to Categories</ButtonText>
+          </Button>
+        </Link>
+
+        <Link href="/users" asChild>
+          <Button variant='outline'>
+            <ButtonText>Go to Users</ButtonText>
           </Button>
         </Link>
 

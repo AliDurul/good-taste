@@ -87,7 +87,6 @@ export default function Register() {
 
     const handleRegister = async (data: SignUpForm) => {
 
-        console.log('Registration data:', data)
         const { error } = await authClient.signUp.email({
             name: data.name,
             phone: data.phone,

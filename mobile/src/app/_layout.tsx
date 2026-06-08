@@ -21,7 +21,8 @@ import { ChartBarStacked, Home } from 'lucide-react-native';
 import { authClient } from '@/lib/auth-client';
 import { Box } from '@/components/ui/box';
 import { Spinner } from '@/components/ui/spinner';
-import useGlobalStore from '@/stores/globalStore';
+import useAppStore from '@/stores/appStore';
+import BrandedSplashScreen from '@/components/SplashScreen';
 
 export {
   // Catch any errors thrown by the Layout component.
@@ -51,54 +52,57 @@ export default function RootLayout() {
 
 
 function RootLayoutNav() {
-  const { onboardingCompleted } = useGlobalStore();
+  const { onboardingCompleted } = useAppStore();
 
   const [colorMode, setColorMode] = useState<'light' | 'dark' | 'system'>('light');
 
   const { data: session, isPending } = authClient.useSession();
 
+  const [hasHydrated, setHasHydrated] = useState(useAppStore.persist.hasHydrated());
+
+  useEffect(() => {
+    if (useAppStore.persist.hasHydrated()) {
+      setHasHydrated(true);
+      return;
+    }
+    return useAppStore.persist.onFinishHydration(() => setHasHydrated(true));
+  }, []);
+
+  const isReady = hasHydrated && !isPending;
 
   // useEffect(() => {
   //   setupReactQuery();
   // }, []);
-
-
-  // if (isPending) {
-  //   return (
-  //     <GluestackUIProvider mode={colorMode} >
-  //       <Box className="flex-1 items-center justify-center" >
-  //         <Spinner color={colorMode === 'dark' ? 'white' : 'black'} size="large" />
-  //       </Box>
-  //     </GluestackUIProvider>
-  //   );
-  // }
-
 
   return (
     <ThemeProvider value={colorMode === 'dark' ? DarkTheme : DefaultTheme}>
       <GestureHandlerRootView style={{ flex: 1 }}>
         <GluestackUIProvider mode={colorMode}>
 
-          {/* <StatusBar style={colorMode === 'dark' ? 'light' : 'dark'} /> */}
+          <StatusBar style={colorMode === 'dark' ? 'light' : 'dark'} />
 
           <QueryClientProvider client={queryClient}>
 
-            <Stack>
-              <Stack.Protected guard={!!session}>
-                <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-                <Stack.Screen name="modal" options={{ presentation: 'modal', headerShown: false, animation: 'slide_from_bottom' }} />
-              </Stack.Protected>
+            {isReady ? (
+              <Stack>
+                <Stack.Protected guard={!!session}>
+                  <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+                  <Stack.Screen name="modal" options={{ presentation: 'modal', headerShown: false, animation: 'slide_from_bottom' }} />
+                </Stack.Protected>
 
-              <Stack.Protected guard={!session && onboardingCompleted}>
-                <Stack.Screen name="login" options={{ headerShown: false }} />
-                <Stack.Screen name="register" options={{ headerShown: false }} />
-                <Stack.Screen name="location-picker" options={{ presentation: 'modal', headerShown: false }} />
-              </Stack.Protected>
+                <Stack.Protected guard={!session && onboardingCompleted}>
+                  <Stack.Screen name="login" options={{ headerShown: false }} />
+                  <Stack.Screen name="register" options={{ headerShown: false }} />
+                  <Stack.Screen name="location-picker" options={{ presentation: 'modal', headerShown: false }} />
+                </Stack.Protected>
 
-              <Stack.Protected guard={!onboardingCompleted}>
-                <Stack.Screen name="onboarding" options={{ headerShown: false }} />
-              </Stack.Protected>
-            </Stack>
+                <Stack.Protected guard={!onboardingCompleted}>
+                  <Stack.Screen name="onboarding" options={{ headerShown: false }} />
+                </Stack.Protected>
+              </Stack>
+            ) : (
+              <BrandedSplashScreen />
+            )}
 
           </QueryClientProvider>
 

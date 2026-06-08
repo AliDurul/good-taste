@@ -4,7 +4,6 @@ import { Stack, usePathname } from 'expo-router'
 
 export default function SecondLayout() {
     const pathname = usePathname();
-    console.log('pathname', pathname);
     return (
         <Stack screenOptions={{
             animation: pathname.startsWith('/second') ? 'default' : 'none',

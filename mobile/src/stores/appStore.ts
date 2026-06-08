@@ -2,19 +2,19 @@ import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import { getItem, setItem, deleteItemAsync } from 'expo-secure-store';
 
-interface GlobalState {
+interface AppState {
     onboardingCompleted: boolean;
     setOnboardingCompleted: (completed: boolean) => void;
 }
 
-const useGlobalStore = create(
-    persist<GlobalState>(
+const useAppStore = create(
+    persist<AppState>(
         (set) => ({
             onboardingCompleted: false,
             setOnboardingCompleted: (completed) => set({ onboardingCompleted: completed }),
         }),
         {
-            name: 'global-store',
+            name: 'app-store',
             storage: createJSONStorage(() => ({
                 getItem,
                 setItem,
@@ -24,4 +24,4 @@ const useGlobalStore = create(
     )
 );
 
-export default useGlobalStore;
+export default useAppStore;
