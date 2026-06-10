@@ -103,10 +103,10 @@ export const checkAndUpdateTier = async (tx: any, customerId: string, totalSpend
 
 // ─────────────────────────────────────────────────────────────────────────────
 // findApplicablePromotion
-// Finds the best active promotion for the given customer and variants.
+// Finds the best active promotion for the given customer and products.
 // Returns one promotion or null.
 // ─────────────────────────────────────────────────────────────────────────────
-export const findApplicablePromotion = async (customerId: string, variantIds: string[]) => {
+export const findApplicablePromotion = async (customerId: string, productIds: string[]) => {
     const customer = await prisma.user.findUnique({
         where: { id: customerId },
         select: { tierId: true },
@@ -141,11 +141,11 @@ export const findApplicablePromotion = async (customerId: string, variantIds: st
         // For non-bundle promotions return the first match
         if (promo.type !== "bundle") return promo;
 
-        // Bundle: check all required variants are in the order
+        // Bundle: check all required products are in the order
         const bundleItems = await prisma.promotionBundleItem.findMany({
             where: { promotionId: promo.id },
         });
-        const allPresent = bundleItems.every((bi) => variantIds.includes(bi.variantId));
+        const allPresent = bundleItems.every((bi) => productIds.includes(bi.productId));
         if (allPresent) return promo;
     }
 
@@ -153,27 +153,27 @@ export const findApplicablePromotion = async (customerId: string, variantIds: st
 };
 
 // ---------------------------------------------------------------------------
-// Helper: fetch + validate variants, enforce stock
+// Helper: fetch + validate products, enforce stock
 // ---------------------------------------------------------------------------
-export async function buildLineItems(items: { variantId: string; quantity: number }[]) {
-    const variantIds = items.map((i) => i.variantId);
+export async function buildLineItems(items: { productId: string; quantity: number }[]) {
+    const productIds = items.map((i) => i.productId);
 
-    const variants = await prisma.productVariant.findMany({
-        where: { id: { in: variantIds }, isActive: true },
-        include: { product: { select: { id: true, name: true, category: { select: { id: true, name: true } } } } },
+    const products = await prisma.product.findMany({
+        where: { id: { in: productIds }, isActive: true },
+        include: { category: { select: { id: true, name: true } } },
     });
 
     const errors: string[] = [];
     for (const item of items) {
-        const variant = variants.find((v) => v.id === item.variantId);
-        if (!variant) { errors.push(`Variant ${item.variantId} not found or inactive`); continue; }
-        if (variant.isOutOfStock) {
-            errors.push(`${variant.product.name} (${variant.weightLabel}) is out of stock`);
-        } else if (item.quantity > variant.stockQty) {
-            errors.push(`${variant.product.name} (${variant.weightLabel}) only has ${variant.stockQty} in stock`);
+        const product = products.find((p) => p.id === item.productId);
+        if (!product) { errors.push(`Product ${item.productId} not found or inactive`); continue; }
+        if (product.stockQty <= 0) {
+            errors.push(`${product.name} is out of stock`);
+        } else if (item.quantity > product.stockQty) {
+            errors.push(`${product.name} only has ${product.stockQty} in stock`);
         }
     }
     if (errors.length > 0) throw new CustomError(errors.join("; "), 400, true);
 
-    return { variants, variantIds };
+    return { products, productIds };
 }

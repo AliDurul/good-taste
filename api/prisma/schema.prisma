@@ -209,56 +209,30 @@ model Product {
   name        String // breakfast, roller meal
   description String?
   isActive    Boolean @default(true)
-  image       String?
+  image       String? // Cloudflare URLs
 
   categoryId String
   category   Category @relation(fields: [categoryId], references: [id])
 
-  variants ProductVariant[] // one-to-many
-
-  createdAt  DateTime    @default(now())
-  updatedAt  DateTime    @updatedAt
-  orderItems OrderItem[]
-
-  @@index([categoryId])
-  @@index([isActive])
-  @@map("product")
-}
-
-model ProductVariant {
-  id        String  @id @default(uuid())
-  productId String
-  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
-
-  // What makes this variant unique
-  weightKg    Float // e.g. 25.0, 20.0, 12.5
-  weightLabel String // e.g. "25kg", "20kg", "12.5kg"
-
+  // Commercial fields (formerly on ProductVariant)
+  weightKg  Float // e.g. 25.0, 20.0, 12.5
   price     Float // e.g. 250.00
   earnValue Float // 1% of price — e.g. 2.50
   // Tip: recalculate earnValue in your API whenever price is updated
 
-  // Variant-level images (photo of the actual 25kg bag)
-  image String? // Cloudflare URLs
-
-  // Stock management (per variant)
+  // Stock management
   stockQty          Int       @default(0)
   lowStockThreshold Int       @default(10)
-  isOutOfStock      Boolean   @default(false)
   lastRestockedAt   DateTime?
 
-  isActive Boolean @default(true)
-
+  createdAt        DateTime              @default(now())
+  updatedAt        DateTime              @updatedAt
   orderItems       OrderItem[]
   bundlePromotions PromotionBundleItem[]
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@unique([productId, weightKg]) // can't have two 25kg variants of the same product
-  @@index([productId])
-  @@index([isOutOfStock])
-  @@map("product_variant")
+  @@index([categoryId])
+  @@index([isActive])
+  @@map("product")
 }
 
 // =============================================================================
@@ -318,18 +292,15 @@ model OrderItem {
   orderId String
   order   Order  @relation(fields: [orderId], references: [id], onDelete: Cascade)
 
-  variantId String
-  variant   ProductVariant @relation(fields: [variantId], references: [id])
+  productId String
+  product   Product @relation(fields: [productId], references: [id])
 
   // Snapshots at time of order — never changes retroactively
   productName  String // e.g. "Breakfast"
-  weightLabel  String // e.g. "25kg"
   productPrice Float // e.g. 250.00
   earnValue    Float // e.g. 2.50 (1% of price at time of order)
   quantity     Int
   subtotal     Float // productPrice × quantity
-  productId    String?
-  product      Product? @relation(fields: [productId], references: [id])
 
   @@index([orderId])
   @@map("order_item")
@@ -353,7 +324,7 @@ model QRCode {
   amountToCredit Float // pre-calculated on generation
   totalAmount    Float // for reference — e.g. 250.00
   orderReference String // e.g. "ORD-20231010-1234"
-  itemsSummary   Json // e.g. [{ productName: "Breakfast", weightLabel: "25kg", quantity: 1 }]
+  itemsSummary   Json // e.g. [{ name: "Breakfast 25kg", qty: 1, subtotal: 250.00 }]
 
   // relations
   order    Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
@@ -494,12 +465,12 @@ model PromotionTargetCategory {
 }
 
 model PromotionBundleItem {
-  id          String         @id @default(uuid())
+  id          String    @id @default(uuid())
   promotionId String
-  promotion   Promotion      @relation(fields: [promotionId], references: [id], onDelete: Cascade)
-  variantId   String
-  variant     ProductVariant @relation(fields: [variantId], references: [id], onDelete: Cascade)
+  promotion   Promotion @relation(fields: [promotionId], references: [id], onDelete: Cascade)
+  productId   String
+  product     Product   @relation(fields: [productId], references: [id], onDelete: Cascade)
 
-  @@unique([promotionId, variantId])
+  @@unique([promotionId, productId])
   @@map("promotion_bundle_item")
 }

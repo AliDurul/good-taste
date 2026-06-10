@@ -12,6 +12,7 @@ import { Field, FieldLabel, FieldError } from '@/components/ui/field'
 import { ImageIcon } from 'lucide-react'
 import { useUploadThing } from '@/lib/uploadthing'
 import { authClient } from '@/lib/auth-client'
+import { hasRole, hasAnyRole } from '@/lib/utils'
 import {
     Select,
     SelectContent,
@@ -29,8 +30,11 @@ const createFormSchema = userCreateSchema
     .extend({ birthday: z.string().optional() })
 
 const updateFormSchema = userUpdateSchema
-    .omit({ birthday: true, assignedAgentId: true })
-    .extend({ birthday: z.string().optional() })
+    .omit({ birthday: true })
+    .extend({
+        birthday: z.string().optional(),
+        role: z.enum(["customer", "agent", "officer", "admin"]).optional(),
+    })
 
 type UserFormValues = {
     name: string
@@ -50,7 +54,7 @@ interface UserFormEditProps {
     mode: 'edit'
     userId: string
     defaultValues?: Partial<UserFormValues>
-    agents?: never
+    agents?: IUser[]
 }
 interface UserFormCreateProps {
     mode: 'create'
@@ -64,10 +68,13 @@ export function UserForm({ mode, userId, defaultValues, agents = [] }: UserFormP
     const router = useRouter()
     const isEdit = mode === 'edit'
     const { data: session } = authClient.useSession()
-    const isAdmin = session?.user.role === 'admin'
+    const isAdmin = hasRole(session?.user.role, 'admin')
+    const isAgent = hasRole(session?.user.role, 'agent')
+    const canManageRoles = hasAnyRole(session?.user.role, ['admin', 'officer'])
     const [imageFile, setImageFile] = useState<File | null>(null)
     const [imagePreview, setImagePreview] = useState<string | null>(null)
     const { startUpload, isUploading } = useUploadThing('imageUploader')
+
 
     function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
         const file = e.target.files?.[0] ?? null
@@ -76,7 +83,7 @@ export function UserForm({ mode, userId, defaultValues, agents = [] }: UserFormP
         setImagePreview(file ? URL.createObjectURL(file) : null)
     }
 
-    const { control, handleSubmit, formState: { isSubmitting } } = useForm<UserFormValues>({
+    const { control, handleSubmit, formState: { isSubmitting, errors } } = useForm<UserFormValues>({
         resolver: zodResolver(isEdit ? updateFormSchema : createFormSchema) as Resolver<UserFormValues>,
         defaultValues: isEdit
             ? {
@@ -87,19 +94,21 @@ export function UserForm({ mode, userId, defaultValues, agents = [] }: UserFormP
                 city: '',
                 country: '',
                 birthday: '',
+                role: 'customer',
+                assignedAgentId: '',
                 ...defaultValues,
             }
             : {
                 name: '',
                 email: '',
-                password: '',
+                password: 'Goodtaste2026',
                 role: 'customer',
                 phone: '',
                 address: '',
                 city: '',
                 country: '',
                 birthday: '',
-                assignedAgentId: '',
+                assignedAgentId: isAgent ? session?.user.id : '',
             },
     })
 
@@ -118,7 +127,15 @@ export function UserForm({ mode, userId, defaultValues, agents = [] }: UserFormP
         let result: { success: boolean; message?: string }
 
         if (isEdit && userId) {
-            result = await updateUser(userId, cleaned as UserUpdate)
+            const { role, ...rest } = cleaned
+            result = await updateUser(userId, rest as UserUpdate)
+
+            if (result.success && role && role !== defaultValues?.role) {
+                const { error } = await authClient.admin.setRole({ userId, role: role as 'user' | 'admin' })
+                if (error) {
+                    result = { success: false, message: error.message }
+                }
+            }
         } else {
             let imageUrl: string | undefined
             if (imageFile) {
@@ -137,7 +154,11 @@ export function UserForm({ mode, userId, defaultValues, agents = [] }: UserFormP
             if (isEdit) {
                 router.back()
             } else {
-                router.push('/dashboard/users')
+                if (isAgent) {
+                    router.push('/dashboard/orders')
+                } else {
+                    router.push('/dashboard/users/')
+                }
             }
         } else {
             toast.error(result.message ?? 'Something went wrong. Please try again.')
@@ -226,56 +247,37 @@ export function UserForm({ mode, userId, defaultValues, agents = [] }: UserFormP
                         )}
                     />
 
-                    {/* Password — create mode only */}
-                    {!isEdit && (
+                    {/* Role — admin and officer only */}
+                    {canManageRoles && (
                         <Controller
-                            name="password"
+                            name="role"
                             control={control}
                             render={({ field, fieldState }) => (
                                 <Field data-invalid={fieldState.invalid}>
-                                    <FieldLabel htmlFor={field.name}>Password</FieldLabel>
-                                    <Input
-                                        {...field}
-                                        id={field.name}
-                                        type="password"
-                                        placeholder="Min. 8 characters"
-                                        aria-invalid={fieldState.invalid}
+                                    <FieldLabel>Role</FieldLabel>
+                                    <Select
+                                        value={field.value ?? 'customer'}
+                                        onValueChange={field.onChange}
                                         disabled={isLoading}
-                                    />
+                                    >
+                                        <SelectTrigger className="w-full" aria-invalid={fieldState.invalid}>
+                                            <SelectValue placeholder="Select a role" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="customer">Customer</SelectItem>
+                                            <SelectItem value="agent">Agent</SelectItem>
+                                            <SelectItem value="officer">Officer</SelectItem>
+                                            <SelectItem value="admin">Admin</SelectItem>
+                                        </SelectContent>
+                                    </Select>
                                     {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
                                 </Field>
                             )}
                         />
                     )}
 
-                    <Controller
-                        name="role"
-                        control={control}
-                        render={({ field, fieldState }) => (
-                            <Field data-invalid={fieldState.invalid}>
-                                <FieldLabel>Role</FieldLabel>
-                                <Select
-                                    value={field.value ?? 'customer'}
-                                    onValueChange={field.onChange}
-                                    disabled={isLoading}
-                                >
-                                    <SelectTrigger className="w-full" aria-invalid={fieldState.invalid}>
-                                        <SelectValue placeholder="Select a role" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="customer">Customer</SelectItem>
-                                        <SelectItem value="agent">Agent</SelectItem>
-                                        <SelectItem value="officer">Officer</SelectItem>
-                                        <SelectItem value="admin">Admin</SelectItem>
-                                    </SelectContent>
-                                </Select>
-                                {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-                            </Field>
-                        )}
-                    />
-
-                    {/* Assigned Agent — create mode, admin only */}
-                    {!isEdit && isAdmin && agents.length > 0 && (
+                    {/* Assigned Agent — admin only */}
+                    {isAdmin && agents.length > 0 && (
                         <Controller
                             name="assignedAgentId"
                             control={control}

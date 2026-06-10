@@ -36,7 +36,7 @@ export function ProductActions({ productId, productName }: ProductActionsProps) 
                 open={deleteOpen}
                 onOpenChange={setDeleteOpen}
                 title="Delete product?"
-                description={`"${productName}" will be permanently removed along with all its variants. This action cannot be undone.`}
+                description={`"${productName}" will be permanently removed. This action cannot be undone.`}
                 onConfirm={async () => {
                     const result = await deleteProduct(productId)
                     if (result.success) {

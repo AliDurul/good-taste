@@ -29,8 +29,7 @@ async function Users({ searchParams }: IPageSearchParams) {
 
     const params = await searchParams;
 
-    const result = await getUsers(params);
-console.log(result.data)
+    const result = await getUsers({ ...params, roles: params.roles ?? 'customer' });
     
     return (
         <UserTable result={result} />

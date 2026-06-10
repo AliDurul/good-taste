@@ -88,7 +88,9 @@ export const auth = betterAuth({
         })
     ],
     advanced: {
-        generateId: () => crypto.randomUUID(),
+        database: {
+            generateId: 'uuid',
+        },
         cookiePrefix: "goodtaste",
         useSecureCookies: true,
         defaultCookieAttributes: {
@@ -124,13 +126,13 @@ export const auth = betterAuth({
         process.env.WEB_FRONTEND_URL!,
         "http://10.0.2.2:8000", // For Android emulator accessing backend
 
-      	...(process.env.NODE_ENV === "development" ? [
-			"exp://**", // Expo dev client
-			"exp://192.168.*.*:*/**", // Local network
-		] : [
-			"myapp://*",
-			"https://your-web-domain.com", // If web version exists
-		])
+        ...(process.env.NODE_ENV === "development" ? [
+            "exp://**", // Expo dev client
+            "exp://192.168.*.*:*/**", // Local network
+        ] : [
+            "myapp://*",
+            "https://your-web-domain.com", // If web version exists
+        ])
     ],
     secret: process.env.BETTER_AUTH_SECRET!,
     baseURL: process.env.BASE_URL!,

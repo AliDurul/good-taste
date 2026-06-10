@@ -15,7 +15,7 @@ export const listProducts: RequestHandler = async (req, res) => {
 
     const orderBy: ProductOrderByWithRelationInput = query.sortBy
         ? { [query.sortBy]: query.sortDirection === "desc" ? "desc" : "asc" }
-        : { name: "asc" };
+        : { createdAt: "desc" };
 
     const [products, totalCount] = await Promise.all([
         prisma.product.findMany({
@@ -24,19 +24,6 @@ export const listProducts: RequestHandler = async (req, res) => {
             take: limit,
             orderBy,
             include: {
-                variants: {
-                    where: { isActive: true },
-                    orderBy: { weightKg: "asc" },
-                    select: {
-                        id: true,
-                        productId: true,
-                        weightKg: true,
-                        weightLabel: true,
-                        price: true,
-                        earnValue: true,
-                        image: true,
-                    },
-                },
                 category: {
                     select: {
                         id: true,
@@ -70,9 +57,6 @@ export const getProduct: RequestHandler = async (req, res) => {
     const product = await prisma.product.findUnique({
         where: { id },
         include: {
-            variants: {
-                orderBy: { weightKg: "asc" },
-            },
             category: {
                 select: {
                     id: true,
@@ -91,28 +75,15 @@ export const getProduct: RequestHandler = async (req, res) => {
 
 export const createProduct: RequestHandler = async (req, res) => {
 
-    const { variants, ...productData } = req.body as any;
+    const { earnValue, price, ...rest } = req.body as any;
 
     const product = await prisma.product.create({
         data: {
-            ...productData,
-            ...(variants?.length ? {
-                variants: {
-                    create: await Promise.all(variants.map(async (variant: any) => ({
-                        weightKg: variant.weightKg,
-                        weightLabel: variant.weightLabel,
-                        price: variant.price,
-                        earnValue: variant.earnValue ?? await calculateEarnValue(variant.price),
-                        image: variant.image,
-                        stockQty: variant.stockQty,
-                        lowStockThreshold: variant.lowStockThreshold,
-                    })))
-                }
-            } : {}),
+            ...rest,
+            price,
+            earnValue: earnValue ?? await calculateEarnValue(price),
         },
-
         include: {
-            variants: true,
             category: true,
         }
     });
@@ -123,10 +94,15 @@ export const createProduct: RequestHandler = async (req, res) => {
 export const updateProduct: RequestHandler = async (req, res) => {
     const { id } = req.params as { id: string };
 
+    const data = { ...req.body };
+    // Recompute earnValue when price changes and no explicit earnValue was provided
+    if (data.price !== undefined && data.earnValue === undefined) {
+        data.earnValue = await calculateEarnValue(data.price);
+    }
 
     const product = await prisma.product.update({
         where: { id },
-        data: req.body
+        data,
     });
 
     res.status(200).send({ success: true, data: product });

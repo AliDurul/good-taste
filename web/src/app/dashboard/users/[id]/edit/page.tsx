@@ -1,5 +1,5 @@
 import { notFound } from 'next/navigation'
-import { getUser } from '@/actions/queries'
+import { getUser, getAgents } from '@/actions/queries'
 import { DataSection } from '@/components/DataSection'
 import { UserForm } from '../../_components/UserForm'
 
@@ -23,7 +23,7 @@ export default function EditUserPage({ params }: { params: Promise<{ id: string 
 
 async function FormData({ params }: { params: Promise<{ id: string }> }) {
     const { id } = await params
-    const result = await getUser(id)
+    const [result, agentsResult] = await Promise.all([getUser(id), getAgents()])
 
     if (!result.success) {
         notFound()
@@ -40,6 +40,7 @@ async function FormData({ params }: { params: Promise<{ id: string }> }) {
         <UserForm
             mode="edit"
             userId={user.id}
+            agents={agentsResult.data ?? []}
             defaultValues={{
                 name: user.name,
                 email: user.email,
@@ -48,6 +49,8 @@ async function FormData({ params }: { params: Promise<{ id: string }> }) {
                 city: user.city ?? '',
                 country: user.country ?? '',
                 birthday,
+                role: user.role,
+                assignedAgentId: user.assignedAgentId ?? '',
             }}
         />
     )

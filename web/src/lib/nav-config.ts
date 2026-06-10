@@ -1,10 +1,10 @@
 // lib/nav.tsx
-import { TerminalSquareIcon, BotIcon, Settings2Icon } from "lucide-react"
+import { TerminalSquareIcon, BotIcon, Settings2Icon, Users, Boxes, Settings, LayoutDashboardIcon, ShoppingCart } from "lucide-react"
 
 const navConfig = [
   {
     title: "Dashboard",
-    icon: TerminalSquareIcon,
+    icon: LayoutDashboardIcon,
     isActive: true,
     roles: ["admin", "officer", "agent"],   // everyone
     items: [
@@ -15,21 +15,29 @@ const navConfig = [
   },
   {
     title: "Stocks",
-    icon: BotIcon,
+    icon: Boxes,
     roles: ["admin", "officer"],
     items: [
       { title: "Products", url: "/dashboard/products", roles: ["admin", "officer"] },
-      { title: "Product variants", url: "/dashboard/products/variants", roles: ["admin", "officer"] },
       { title: "Product Categories", url: "/dashboard/products/categories", roles: ["admin"] },
     ],
   },
   {
-    title: "Users",
-    icon: BotIcon,
-    roles: ["admin"],
+    title: "Orders",
+    icon: ShoppingCart,
+    roles: ["admin", "officer", "agent"],
     items: [
-      { title: "User List", url: "/dashboard/users", roles: ["admin"] },
-      { title: "Create User", url: "/dashboard/users/new", roles: ["admin"] },
+      { title: "Order List", url: "/dashboard/orders", roles: ["admin", "officer", "agent"] },
+      { title: "Create Order", url: "/dashboard/orders/new", roles: ["admin", "officer"] },
+    ],
+  },
+  {
+    title: "Users",
+    icon: Users,
+    roles: ["admin", 'agent', 'officer'],
+    items: [
+      { title: "User List", url: "/dashboard/users", roles: ["admin", 'officer'] },
+      { title: "Create User", url: "/dashboard/users/new", roles: ["admin", 'officer', 'agent'] },
     ],
   },
   // {
@@ -46,7 +54,7 @@ const navConfig = [
   {
     title: "Settings",
     url: "/dashboard/settings",
-    icon: Settings2Icon,
+    icon: Settings,
     roles: ["admin"],
     items: [
       { title: "Wallet Config", url: "/dashboard/settings/wallet-config", roles: ["admin"] },

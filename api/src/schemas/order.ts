@@ -1,7 +1,7 @@
 import z from "zod";
 
 const orderItemSchema = z.object({
-    variantId: z.string().uuid(),
+    productId: z.string().uuid(),
     quantity: z.number().int().positive(),
 });
 

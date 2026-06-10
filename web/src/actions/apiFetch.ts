@@ -38,6 +38,7 @@ export async function apiFetch<T>(endpoint: string, sessionToken: string | undef
 
     if (!res.ok) {
         const error = await res.json().catch(() => ({}))
+        console.error("API Error:", { endpoint, status: res.status, error })
         throw new ApiError(error.message || "API Error", res.status)
     }
 

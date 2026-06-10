@@ -1,4 +1,3 @@
-
 export interface IProduct {
     id: string;
     name: string;
@@ -6,10 +5,15 @@ export interface IProduct {
     isActive: boolean;
     image?: string;
     categoryId: string;
+    weightKg: number;
+    price: number;
+    earnValue: number;
+    stockQty: number;
+    lowStockThreshold: number;
+    lastRestockedAt: Date | null;
+    category?: IProductCategory;
     createdAt: Date;
     updatedAt: Date;
-    category?: IProductCategory;
-    variants?: IProductVariant[];
 }
 
 export interface IProductCategory {
@@ -20,25 +24,4 @@ export interface IProductCategory {
     isActive: boolean;
     createdAt: Date;
     updatedAt: Date;
-}
-
-export interface IProductVariant {
-    id: string;
-    productId: string;
-    weightKg: number;
-    weightLabel: string;
-    price: number;
-    earnValue: number;
-    image?: string;
-    stockQty: number;
-    lowStockThreshold: number;
-    isOutOfStock: boolean;
-    lastRestockedAt: Date | null;
-    isActive: boolean;
-    createdAt: Date;
-    updatedAt: Date;
-}
-
-export interface IProductVariantWithProduct extends IProductVariant {
-    product: IProduct;
 }

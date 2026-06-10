@@ -40,17 +40,6 @@ async function EditProductContent({ params }: IPageParams) {
     const product = productResult.data
     const productImage = (product as unknown as { image?: string }).image
 
-    const defaultVariants = (product.variants ?? []).map((v) => ({
-        id: v.id,
-        weightLabel: v.weightLabel,
-        weightKg: v.weightKg,
-        price: v.price,
-        earnValue: v.earnValue,
-        stockQty: v.stockQty,
-        lowStockThreshold: v.lowStockThreshold,
-        isActive: v.isActive,
-    }))
-
     return (
         <>
             {/* Back button */}
@@ -68,14 +57,16 @@ async function EditProductContent({ params }: IPageParams) {
                     productId={product.id}
                     categories={categoriesResult.data ?? []}
                     existingImageUrl={productImage}
-                    originalVariantIds={(product.variants ?? []).map((v) => v.id)}
                     defaultValues={{
                         name: product.name,
                         description: product.description ?? '',
                         categoryId: product.categoryId,
                         isActive: product.isActive,
                         image: '',
-                        variants: defaultVariants,
+                        weightKg: product.weightKg,
+                        price: product.price,
+                        stockQty: product.stockQty,
+                        lowStockThreshold: product.lowStockThreshold,
                     }}
                 />
             </div>

@@ -25,6 +25,7 @@ import { DataTableColumnHeader } from '@/components/table/data-table-column-head
 import { DeleteDialog } from '@/components/DeleteDialog'
 import { IUser } from '@/types'
 import Image from 'next/image'
+import { Spinner } from '@/components/ui/spinner'
 
 
 
@@ -166,10 +167,9 @@ export const Columns: ColumnDef<IUser>[] = [
         header: ({ column }) => <DataTableColumnHeader column={column} title="Role" isSorted={column.getIsSorted()} />,
         cell: ({ row }) => {
             const role = row.getValue("role") as string
-            return <Badge variant={'outline'}>{role}</Badge>
+            return <Badge variant={'outline'} className=''>{role}</Badge>
         }
     },
-
     {
         id: 'assigned-agent',
         accessorFn: (row) => row.assignedAgent ? row.assignedAgent.name : "No Agent",
@@ -239,7 +239,7 @@ function RoleFilter() {
     const { updateUrlParams, getParam } = useUrlParams()
     const [isPending, startTransition] = useTransition()
 
-    const selectedRoles = getParam('roles')?.split(',').filter(Boolean) ?? []
+    const selectedRoles = getParam('roles')?.split(',').filter(Boolean) ?? ['customer']
 
     function toggleRole(role: string) {
         const next = selectedRoles.includes(role)
@@ -256,8 +256,10 @@ function RoleFilter() {
     return (
         <DropdownMenu>
             <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="sm" className="h-8 gap-1" disabled={isPending}>
-                    <Filter className="size-3.5" />
+                <Button variant="outline" size="sm" className='h-8 gap-1' disabled={isPending}>
+                    {
+                        isPending ? <Spinner className='size-3.5' /> : <Filter className="size-3.5" />
+                    }
                     Role
                     {selectedRoles.length > 0 && (
                         <Badge variant="secondary" className="ml-1 rounded-full px-1.5 py-0 text-xs">

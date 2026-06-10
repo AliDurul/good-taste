@@ -1,8 +1,9 @@
 @baseurl = http://localhost:8000/api/v1
 @token = {{signInBetterAuth.response.body.token}}
 
-@agent1Token = FLVT8CveRZbGnOOEMybLQGbh1cCdvTgg
-@customer8Token = OihuQvfKB0h2TNzjRshOSoaLfNr3mmHw
+@agentToken = {{signInBetterAuthAgent.response.body.token}}
+@adminToken = {{signInBetterAuthAdmin.response.body.token}}
+@customerToken = {{signInBetterAuthCustomer.response.body.token}}
 
 ### BETTER AUTH
 
@@ -25,9 +26,43 @@ POST {{baseurl}}/auth/sign-in/email
 Content-Type: application/json
 
 {
-  "email": "customer8@test.com",
-  "password": "pass1234"
+  "email": "customerTest@test.com",
+  "password": "Pass1234"
 }
+
+### 
+
+# @name signInBetterAuthAdmin
+POST {{baseurl}}/auth/sign-in/email
+Content-Type: application/json
+
+{
+  "email": "alidrl@gmail.com",
+  "password": "Goodtaste2021.,?"
+}
+
+### 
+
+# @name signInBetterAuthAgent
+POST {{baseurl}}/auth/sign-in/email
+Content-Type: application/json
+
+{
+  "email": "agentTest2@test.com",
+  "password": "Pass1234"
+}
+
+### 
+
+# @name signInBetterAuthCustomer
+POST {{baseurl}}/auth/sign-in/email
+Content-Type: application/json
+
+{
+  "email": "customerTest2@test.com",
+  "password": "Pass1234"
+}
+
 ### 
 
 # @name signOutBetterAuth
@@ -74,7 +109,7 @@ Authorization: Bearer {{token}}
 
 # @name userlist
 GET {{baseurl}}/users?
-Authorization: Bearer {{token}}
+Authorization: Bearer {{adminToken}}
 
 ###
 
@@ -87,17 +122,17 @@ Authorization: Bearer {{token}}
 # @name userCreate
 POST {{baseurl}}/users
 Content-Type: application/json
-Authorization: Bearer {{token}}
+Authorization: Bearer {{agentToken}}
 
 {
-    "name": "customer8",
-    "email": "customer8@test.com",
-    "password": "pass1234",
-    "phone": "1234567890",
-    "address": "123 Main St",
-    "city": "Lusaka",
-    "country": "Zambia",
-    "birthday": "1990-01-01"
+  "name": "customer test 3",
+  "email": "customerTest3@test.com",
+  "password": "Pass1234",
+  "phone": "1234567890",
+  "address": "123 Main St",
+  "city": "Lusaka",
+  "country": "Zambia",
+  "birthday": "1990-01-01"
 }
 
 ### WALLET CONFIGS ###
@@ -157,8 +192,8 @@ Content-Type: application/json
 ### PRODUCTS ###
 
 # @name productlist
-GET {{baseurl}}/products
-Authorization: Bearer {{token}}
+GET {{baseurl}}/products?isActive=true
+Authorization: Bearer {{adminToken}}
 
 ###
 
@@ -191,55 +226,16 @@ Authorization: Bearer {{token}}
 Content-Type: application/json
 
 {
-    "name": "test product",
-    "isActive": true,
-    "categoryId": "7b84aca4-723a-4e6b-9eb9-28cf558124b7",
-    "variants": [
-        {
-            "weightKg": 25,
-            "weightLabel": "25kg",
-            "price": 250.00,
-            "stockQty": 0,
-            "lowStockThreshold": 30
-        },
-        {
-            "weightKg": 50,
-            "weightLabel": "50kg",
-            "price": 450.00,
-            "stockQty": 0,
-            "lowStockThreshold": 30
-        }
-    ]
-}
-
-
-### VARIANTS ###
-
-# @name variantlist
-GET {{baseurl}}/variants
-?ids=001eb2af-a696-4557-a613-ada1637ad1e7,170b7ff0-5170-483b-8044-731459f9efa5
-# ?includeProduct=true
-Authorization: Bearer {{token}}
-
-###
-
-# @name variantCreate
-post {{baseurl}}/variants
-Authorization: Bearer {{token}}
-Content-Type: application/json
-
-{
+    "categoryId": "51e3a81b-0a0b-4e53-b2e6-87bc556b912c",
+    "name": "test product 25KG",
+    "description": "test product description",
+    "isActive": false,
     "weightKg": 25,
-    "weightLabel": "25kg",
-    "price": 250.00,
-    "pointsValue": 2.50,
-    "images": ["https://cdn.cloudflare.com/variants/breakfast-25kg.jpg"],
-    "stockQty": 0,
+    "price": 250,
+    "stockQty": 100,
     "lowStockThreshold": 30
 }
 
-
-### VARIANTS END ###
 
 ### LOYALTY TIERS ###
 
@@ -286,13 +282,13 @@ Content-Type: application/json
 
 # @name orderList
 GET {{baseurl}}/orders
-Authorization: Bearer {{token}}
+Authorization: Bearer {{customerToken}}
 
 ###
 
 # @name orderRead
 GET {{baseurl}}/orders/afd39c95-56ac-4f92-8cd9-b0d93d748741
-Authorization: Bearer {{agent1Token}}
+Authorization: Bearer {{agentToken}}
 
 ###
 
@@ -304,11 +300,11 @@ Content-Type: application/json
 {
   "items":[
     {
-      "variantId": "001eb2af-a696-4557-a613-ada1637ad1e7",
-      "quantity": 2
+      "productId": "3f8c9a23-68da-47e6-ad70-380e5aef9ca2",
+      "quantity": 1
     },
     {
-      "variantId": "170b7ff0-5170-483b-8044-731459f9efa5",
+      "productId": "285bb72c-86fe-4010-8ec6-607c3847546e",
       "quantity": 1
     }
   ]
@@ -318,45 +314,42 @@ Content-Type: application/json
 
 # @name orderCreate
 POST {{baseurl}}/orders
-Authorization: Bearer {{token}}
+Authorization: Bearer {{customerToken}}
 Content-Type: application/json
 
 {
   "notes": "Please deliver between 9am-5pm",
   "items":[
     {
-      "variantId": "001eb2af-a696-4557-a613-ada1637ad1e7",
+      "productId": "e9fe9680-7d34-42f4-b949-a123c4876bff",
       "quantity": 2
     },
     {
-      "variantId": "170b7ff0-5170-483b-8044-731459f9efa5",
-      "quantity": 1
+      "productId": "1ea14da4-6af3-4c42-9901-20e9a5422a10",
+      "quantity": 5
     }
   ]
 }
 
-
-###
-
 ### 
 
 # @name orderConfirm
-PATCH  {{baseurl}}/orders/afd39c95-56ac-4f92-8cd9-b0d93d748741/confirm
-Authorization: Bearer {{agent1Token}}
+PATCH  {{baseurl}}/orders/af660af4-7234-4cbc-bf68-a21feb3af3ce/confirm
+Authorization: Bearer {{agentToken}}
 
 ### 
 
 # @name orderDeliver
-PATCH  {{baseurl}}/orders/afd39c95-56ac-4f92-8cd9-b0d93d748741/deliver
-Authorization: Bearer {{agent1Token}}
+PATCH  {{baseurl}}/orders/af660af4-7234-4cbc-bf68-a21feb3af3ce/deliver
+Authorization: Bearer {{agentToken}}
 
 ### 
 
 # @name orderScanQR
 POST  {{baseurl}}/orders/scan-qr
-Authorization: Bearer {{customer8Token}}
+Authorization: Bearer {{customerToken}}
 Content-Type: application/json
 
 {
-  "code": "gt_e68007a5-cf91-4df0-8151-b014c22f3d02"
+  "code": "gt_2c33664b-c6ae-4264-af81-6cac3a6067f0"
 }

@@ -106,7 +106,7 @@ function RowActions({ product }: { product: IProduct }) {
                 open={deleteOpen}
                 onOpenChange={setDeleteOpen}
                 title="Delete product?"
-                description={`"${product.name}" will be permanently removed along with all its variants. This action cannot be undone.`}
+                description={`"${product.name}" will be permanently removed. This action cannot be undone.`}
                 onConfirm={() => deleteProduct(product.id)}
             />}
 
@@ -138,7 +138,7 @@ export const Columns: ColumnDef<IProduct>[] = [
     {
         accessorKey: "description",
         header: ({ column }) => <DataTableColumnHeader column={column} title="Description" isSorted={column.getIsSorted()} />,
-        cell: ({ row }) => <p className="line-clamp-1">{row.getValue("description")}</p>,
+        cell: ({ row }) => <p className="max-w-[220px] truncate">{row.getValue("description")}</p>,
         enableSorting: false,
     },
     {
@@ -155,10 +155,24 @@ export const Columns: ColumnDef<IProduct>[] = [
         },
     },
     {
-        id: "variants",
-        accessorFn: (row) => row.variants?.length,
-        header: ({ column }) => <DataTableColumnHeader column={column} title="Variants" isSorted={column.getIsSorted()} />,
-        cell: ({ row }) => <p className="w-20 text-center">{row.getValue("variants") || 0}</p>,
+        accessorKey: "price",
+        header: ({ column }) => <DataTableColumnHeader column={column} title="Price" isSorted={column.getIsSorted()} />,
+        cell: ({ row }) => <p>K{row.original.price.toFixed(2)}</p>,
+    },
+    {
+        accessorKey: "stockQty",
+        header: ({ column }) => <DataTableColumnHeader column={column} title="Stock" isSorted={column.getIsSorted()} />,
+        cell: ({ row }) => {
+            const product = row.original
+            return (
+                <div className="flex items-center gap-2">
+                    <span>{product.stockQty}</span>
+                    {product.stockQty <= product.lowStockThreshold && (
+                        <Badge variant="outline">Low</Badge>
+                    )}
+                </div>
+            )
+        },
     },
     {
         accessorKey: "createdAt",

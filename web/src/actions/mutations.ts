@@ -1,11 +1,13 @@
 // actions/mutations.ts
 'use server'
-import { ProductWithVariantsCreate, VariantCreate, VariantUpdate, WalletConfigUpdate, LoyaltyTierForm, CategoryCreate, CategoryUpdate, UserCreate, UserUpdate } from '@/schemas'
-import { apiFetch, getSessionToken } from './apiFetch'
+import { ProductCreate, ProductUpdate, WalletConfigUpdate, LoyaltyTierForm, CategoryCreate, CategoryUpdate, UserCreate, UserUpdate, OrderCreateForm, OrderPreview, OrderUpdate } from '@/schemas'
+import { apiFetch, getSessionToken, safeApiFetch } from './apiFetch'
+import type { ActionResult, IDeliverOrderData, IOrder, IOrderPreviewData } from '@/types'
+import { ApiError } from '@/lib/error'
 import { updateTag } from 'next/cache'
 
 
-export async function createProduct(data: ProductWithVariantsCreate) {
+export async function createProduct(data: ProductCreate) {
     const token = await getSessionToken()
     const result = await apiFetch<{ success: boolean }>('/products', token, {
         method: 'POST',
@@ -32,33 +34,6 @@ export async function updateWalletConfig(
     }
 }
 
-export async function createVariant(data: VariantCreate) {
-    const token = await getSessionToken()
-    const result = await apiFetch('/variants', token, {
-        method: 'POST',
-        body: JSON.stringify(data),
-    })
-    updateTag('variants')
-    return result
-}
-
-export async function updateVariant(id: string, data: VariantUpdate) {
-    const token = await getSessionToken()
-    const result = await apiFetch(`/variants/${id}`, token, {
-        method: 'PUT',
-        body: JSON.stringify(data),
-    })
-    updateTag('variants')
-    return result
-}
-
-export async function deleteVariant(id: string) {
-    const token = await getSessionToken()
-    const result = await apiFetch(`/variants/${id}`, token, { method: 'DELETE' })
-    updateTag('variants')
-    return result
-}
-
 export async function deleteProduct(id: string): Promise<{ success: boolean; message: string }> {
     const token = await getSessionToken()
     try {
@@ -71,39 +46,13 @@ export async function deleteProduct(id: string): Promise<{ success: boolean; mes
 }
 
 export async function updateProduct(
-    productId: string,
-    data: ProductWithVariantsCreate,
-    originalVariantIds: string[]
+    id: string,
+    data: ProductUpdate
 ): Promise<{ success: boolean; message: string }> {
     const token = await getSessionToken()
     try {
-        const { variants, ...productFields } = data
-
-        // 1. Update product-level fields
-        await apiFetch(`/products/${productId}`, token, {
-            method: 'PUT',
-            body: JSON.stringify(productFields),
-        })
-
-        // 2. Delete variants that were removed
-        const submittedExistingIds = new Set(variants.map(v => v.id).filter((id): id is string => !!id))
-        const toDelete = originalVariantIds.filter(id => !submittedExistingIds.has(id))
-        await Promise.all(toDelete.map(id => apiFetch(`/variants/${id}`, token, { method: 'DELETE' })))
-
-        // 3. Update existing variants
-        const existingVariants = variants.filter((v): v is typeof v & { id: string } => !!v.id)
-        await Promise.all(existingVariants.map(({ id, ...variantData }) =>
-            apiFetch(`/variants/${id}`, token, { method: 'PUT', body: JSON.stringify(variantData) })
-        ))
-
-        // 4. Create new variants
-        const newVariants = variants.filter(v => !v.id)
-        await Promise.all(newVariants.map(variantData =>
-            apiFetch('/variants', token, { method: 'POST', body: JSON.stringify({ ...variantData, productId }) })
-        ))
-
+        await apiFetch(`/products/${id}`, token, { method: 'PUT', body: JSON.stringify(data) })
         updateTag('products')
-        updateTag('variants')
         return { success: true, message: 'Product updated successfully.' }
     } catch {
         return { success: false, message: 'Failed to update product.' }
@@ -199,6 +148,81 @@ export async function deleteUser(id: string): Promise<{ success: boolean; messag
     } catch {
         return { success: false, message: 'Failed to delete user.' }
     }
+}
+
+// ── Orders ─────────────────────────────────────────────────────────────────
+
+export async function createOrder(data: OrderCreateForm): Promise<{ success: boolean; message: string }> {
+    const token = await getSessionToken()
+    const result = await safeApiFetch<{ data: IOrder }>('/orders', token, {
+        method: 'POST',
+        body: JSON.stringify(data),
+    })
+    if (!result.success) {
+        return { success: false, message: result.message || 'Failed to create order.' }
+    }
+    updateTag('products') // stock decremented
+    updateTag('users') // wallet balance may change
+    return { success: true, message: 'Order created successfully.' }
+}
+
+export async function previewOrder(data: OrderPreview): Promise<ActionResult<IOrderPreviewData>> {
+    const token = await getSessionToken()
+    const result = await safeApiFetch<{ data: IOrderPreviewData }>('/orders/preview', token, {
+        method: 'POST',
+        body: JSON.stringify(data),
+    })
+    if (!result.success) return result
+    return { success: true, data: result.data.data }
+}
+
+export async function confirmOrder(orderId: string): Promise<{ success: boolean; message: string }> {
+    const token = await getSessionToken()
+    const result = await safeApiFetch(`/orders/${orderId}/confirm`, token, { method: 'PATCH' })
+    if (!result.success) {
+        return { success: false, message: result.message || 'Failed to confirm order.' }
+    }
+    return { success: true, message: 'Order confirmed.' }
+}
+
+export async function deliverOrder(orderId: string): Promise<ActionResult<IDeliverOrderData>> {
+    const token = await getSessionToken()
+    const result = await safeApiFetch<{ data: IDeliverOrderData }>(`/orders/${orderId}/deliver`, token, {
+        method: 'PATCH',
+    })
+    if (!result.success) return result
+    updateTag('users') // wallet may be credited later via QR scan
+    return { success: true, data: result.data.data }
+}
+
+export async function updateOrder(id: string, data: OrderUpdate): Promise<{ success: boolean; message: string }> {
+    const token = await getSessionToken()
+    const result = await safeApiFetch(`/orders/${id}`, token, {
+        method: 'PUT',
+        body: JSON.stringify(data),
+    })
+    if (!result.success) {
+        return { success: false, message: result.message || 'Failed to update order.' }
+    }
+    if (data.status === 'cancelled') {
+        updateTag('products') // stock restored
+        updateTag('users') // redeemed wallet refunded
+    }
+    return { success: true, message: 'Order updated successfully.' }
+}
+
+export async function deleteOrder(id: string): Promise<{ success: boolean; message: string }> {
+    const token = await getSessionToken()
+    try {
+        await apiFetch(`/orders/${id}`, token, { method: 'DELETE' })
+    } catch (err) {
+        // the API answers 204 with an empty body, which fails res.json() —
+        // only a real ApiError means the delete itself failed
+        if (err instanceof ApiError) {
+            return { success: false, message: 'Failed to delete order.' }
+        }
+    }
+    return { success: true, message: 'Order deleted successfully.' }
 }
 
 export async function createCategory(

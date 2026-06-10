@@ -3,6 +3,7 @@ import { Search } from 'lucide-react'
 import { useEffect, useState, useTransition } from 'react'
 import { Input } from '@/components/ui/input'
 import { useUrlParams } from '@/hooks/useUrlParams';
+import { Spinner } from './ui/spinner';
 
 export default function SearchInput({ className, placeholder }: { className?: string, placeholder?: string }) {
     const { updateUrlParams, getParam, hasParam } = useUrlParams();
@@ -37,7 +38,7 @@ export default function SearchInput({ className, placeholder }: { className?: st
                 onChange={(e) => setQuery(e.target.value)}
                 className="pl-10 text-center sm:text-left"
             />
-            {isPending && <div className="absolute right-2 top-1/2 -translate-y-1/2 h-4 w-4 border-2 border-gray-300 border-t-transparent rounded-full animate-spin" />}
+            {isPending && <Spinner className='absolute right-2 top-1/2 -translate-y-1/2 size-5' />}
         </div>
     )
 }

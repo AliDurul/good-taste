@@ -1,6 +1,6 @@
 'use server'
 import { cacheLife, cacheTag } from 'next/cache'
-import type { ActionResult, IProduct, IWalletConfig, ILoyaltyTier, PaginatedResponse, IProductCategory, IProductVariantWithProduct, IUser } from '@/types'
+import type { ActionResult, IOrder, IProduct, IWalletConfig, ILoyaltyTier, PaginatedResponse, IProductCategory, IUser } from '@/types'
 import { apiFetch, getSessionToken, type FetchParams } from './apiFetch'
 
 async function fetchProducts(token: string | undefined, params?: FetchParams) {
@@ -36,13 +36,6 @@ async function fetchLoyaltyTiers(token: string | undefined) {
   cacheTag('loyalty-tiers')
   cacheLife('hours')
   return apiFetch<PaginatedResponse<ILoyaltyTier>>('/loyalty-tiers', token)
-}
-
-async function fetchVariants(token: string | undefined, params?: FetchParams) {
-  'use cache'
-  cacheTag('variants')
-  cacheLife('minutes')
-  return apiFetch<PaginatedResponse<IProductVariantWithProduct>>('/variants', token, { params })
 }
 
 async function fetchUsers(token: string | undefined, params?: FetchParams) {
@@ -92,19 +85,52 @@ export async function getLoyaltyTiers() {
   return fetchLoyaltyTiers(token)
 }
 
-export async function getVariants(params?: FetchParams) {
-  const token = await getSessionToken()
-  return fetchVariants(token, params)
-}
-
 export async function getUsers(params?: FetchParams) {
   const token = await getSessionToken()
   return fetchUsers(token, params)
 }
 
-export async function getAgents() {
+export async function getAgents(): Promise<PaginatedResponse<IUser> & { success: boolean }> {
   const token = await getSessionToken()
-  return fetchUsers(token, { roles: 'agent', limit: 200 })
+  try {
+    return await fetchUsers(token, { roles: 'agent', limit: 200 })
+  } catch {
+    return {
+      success: true,
+      data: [],
+      pagination: { page: 1, limit: 200, totalCount: 0, totalPages: 0, hasNextPage: false, hasPreviousPage: false },
+    }
+  }
+}
+
+// Orders are created from the mobile app too, outside this app's updateTag()
+// reach — so no 'use cache' here: always fetch fresh.
+export async function getOrders(params?: FetchParams) {
+  const token = await getSessionToken()
+  return apiFetch<PaginatedResponse<IOrder>>('/orders', token, { params })
+}
+
+export async function getOrder(id: string): Promise<ActionResult<IOrder>> {
+  const token = await getSessionToken()
+  try {
+    const res = await apiFetch<{ success: true; data: IOrder }>(`/orders/${id}`, token)
+    return { success: true, data: res.data }
+  } catch {
+    return { success: false, message: 'Order not found', status: 404 }
+  }
+}
+
+export async function getCustomers(): Promise<PaginatedResponse<IUser> & { success: boolean }> {
+  const token = await getSessionToken()
+  try {
+    return await fetchUsers(token, { roles: 'customer', limit: 200 })
+  } catch {
+    return {
+      success: true,
+      data: [],
+      pagination: { page: 1, limit: 200, totalCount: 0, totalPages: 0, hasNextPage: false, hasPreviousPage: false },
+    }
+  }
 }
 
 export async function getUser(id: string): Promise<ActionResult<IUser>> {

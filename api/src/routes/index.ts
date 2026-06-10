@@ -5,7 +5,6 @@ import sessionRoutes from './session.route';
 import authRoutes from "./auth.route";
 import categoryRoutes from "./category.route";
 import productRoutes from "./product.route";
-import variantRoutes from "./variant.route";
 import orderRoutes from "./order.route";
 import loyaltyTierRoutes from "./loyalty-tier.route";
 import walletConfigRoutes from "./wallet-config.route";
@@ -35,9 +34,6 @@ router.use('/loyalty-tiers', authenticate, loyaltyTierRoutes);
 
 // products
 router.use('/products', authenticate, productRoutes);
-
-// variants
-router.use('/variants', authenticate, variantRoutes);
 
 // users
 router.use('/users', authenticate, userRoutes); // ?

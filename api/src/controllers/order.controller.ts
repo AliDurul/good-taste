@@ -30,7 +30,7 @@ export const listOrders: RequestHandler = async (req, res) => {
             where,
             skip,
             take: limit,
-            include: { items: true, qrCode: true },
+            include: { items: true, qrCode: true, customer: { select: { name: true } }, agent: { select: { name: true } } },
             orderBy: { createdAt: "desc" }
         }),
         prisma.order.count({ where }),
@@ -56,7 +56,7 @@ export const getOrder: RequestHandler = async (req, res) => {
 
     const { id } = req.params;
     
-    const order = await prisma.order.findUnique({ where: { id }, include: { items: true, qrCode: true } });
+    const order = await prisma.order.findUnique({ where: { id }, include: { items: true, qrCode: true, customer: { select: { name: true } }, agent: { select: { name: true } } } });
     
     if (!order) throw new CustomError("Order not found", 404, true);
     
@@ -67,7 +67,7 @@ export const previewOrder: RequestHandler = async (req, res) => {
     const customerId = req.user!.id;
     const { items, walletRedeemed = 0 } = req.body;
 
-    const { variants, variantIds } = await buildLineItems(items);
+    const { products, productIds } = await buildLineItems(items);
 
     const customer = await prisma.user.findUnique({
         where: { id: customerId },
@@ -81,30 +81,28 @@ export const previewOrder: RequestHandler = async (req, res) => {
     const lineItems = [];
 
     for (const item of items) {
-        const variant = variants.find((v) => v.id === item.variantId)!;
-        const subtotal = parseFloat((variant.price * item.quantity).toFixed(2));
-        const earned = parseFloat((variant.earnValue * item.quantity).toFixed(2));
+        const product = products.find((p) => p.id === item.productId)!;
+        const subtotal = parseFloat((product.price * item.quantity).toFixed(2));
+        const earned = parseFloat((product.earnValue * item.quantity).toFixed(2));
         totalAmount += subtotal;
         baseWalletEarned += earned;
         lineItems.push({
-            variantId: variant.id,
-            productId: variant.product.id,
-            productName: variant.product.name,
-            category: variant.product.category.name,
-            weightLabel: variant.weightLabel,
-            unitPrice: variant.price,
-            earnValue: variant.earnValue,
+            productId: product.id,
+            productName: product.name,
+            category: product.category.name,
+            unitPrice: product.price,
+            earnValue: product.earnValue,
             quantity: item.quantity,
             subtotal,
             earnedForLine: earned,
-            images: variant.image,
-            remainingStock: variant.stockQty - item.quantity,
+            images: product.image,
+            remainingStock: product.stockQty - item.quantity,
         });
     }
 
     totalAmount = parseFloat(totalAmount.toFixed(2));
 
-    const promotion = await findApplicablePromotion(customerId, variantIds);
+    const promotion = await findApplicablePromotion(customerId, productIds);
     const { discountAmount, isFreeDelivery, earnMultiplier } = applyPromotion(promotion, totalAmount);
 
     const finalAmount = parseFloat((totalAmount - discountAmount).toFixed(2));
@@ -142,7 +140,6 @@ export const createOrder: RequestHandler = async (req, res) => {
 
     if (!customer) throw new CustomError("Customer not found", 404, true);
 
-
     const agentId = placedBy === "agent"
         ? req.user!.id
         : (customer?.assignedAgentId
@@ -152,25 +149,25 @@ export const createOrder: RequestHandler = async (req, res) => {
 
     const { items, walletRedeemed = 0, notes, deliveryAddress, paymentStatus, paymentMethod } = req.body;
 
-    const { variants, variantIds } = await buildLineItems(items);
+    const { products, productIds } = await buildLineItems(items);
 
     const tierMultiplier = customer.tier?.earnMultiplier ?? 1.0;
     let totalAmount = 0;
     let baseWalletEarned = 0;
-    const lineItems: { variant: (typeof variants)[number]; item: { variantId: string; quantity: number }; subtotal: number }[] = [];
+    const lineItems: { product: (typeof products)[number]; item: { productId: string; quantity: number }; subtotal: number }[] = [];
 
     for (const item of items) {
-        const variant = variants.find((v) => v.id === item.variantId)!;
-        const subtotal = parseFloat((variant.price * item.quantity).toFixed(2));
-        const earned = parseFloat((variant.earnValue * item.quantity).toFixed(2));
+        const product = products.find((p) => p.id === item.productId)!;
+        const subtotal = parseFloat((product.price * item.quantity).toFixed(2));
+        const earned = parseFloat((product.earnValue * item.quantity).toFixed(2));
         totalAmount += subtotal;
         baseWalletEarned += earned;
-        lineItems.push({ variant, item, subtotal });
+        lineItems.push({ product, item, subtotal });
     }
 
     totalAmount = parseFloat(totalAmount.toFixed(2));
 
-    const promotion = await findApplicablePromotion(customerId, variantIds);
+    const promotion = await findApplicablePromotion(customerId, productIds);
     const { discountAmount, isFreeDelivery, earnMultiplier } = applyPromotion(promotion, totalAmount);
 
     const finalAmount = parseFloat((totalAmount - discountAmount).toFixed(2));
@@ -180,7 +177,6 @@ export const createOrder: RequestHandler = async (req, res) => {
         if (customer.walletBalance < walletRedeemed) throw new CustomError("Insufficient wallet balance", 400, true);
         if (walletRedeemed > finalAmount) throw new CustomError("Cannot redeem more than the order total", 400, true);
     }
-
 
     const order = await prisma.$transaction(async (tx) => {
         const newOrder = await tx.order.create({
@@ -200,13 +196,11 @@ export const createOrder: RequestHandler = async (req, res) => {
                 deliveryAddress: deliveryAddress ?? customer.address,
                 notes,
                 items: {
-                    create: lineItems.map(({ variant, item, subtotal }) => ({
-                        variantId: variant.id,
-                        productId: variant.product.id,
-                        productName: variant.product.name,
-                        weightLabel: variant.weightLabel,
-                        productPrice: variant.price,
-                        earnValue: variant.earnValue,
+                    create: lineItems.map(({ product, item, subtotal }) => ({
+                        productId: product.id,
+                        productName: product.name,
+                        productPrice: product.price,
+                        earnValue: product.earnValue,
                         quantity: item.quantity,
                         subtotal,
                     })),
@@ -228,10 +222,10 @@ export const createOrder: RequestHandler = async (req, res) => {
             await tx.user.update({ where: { id: customerId }, data: { walletBalance: { decrement: walletRedeemed } } });
         }
 
-        // Decrement stock for each variant
-        for (const { variant, item } of lineItems) {
-            const newQty = variant.stockQty - item.quantity;
-            await tx.productVariant.update({ where: { id: variant.id }, data: { stockQty: newQty, isOutOfStock: newQty === 0 } });
+        // Decrement stock for each product
+        for (const { product, item } of lineItems) {
+            const newQty = product.stockQty - item.quantity;
+            await tx.product.update({ where: { id: product.id }, data: { stockQty: newQty } });
         }
 
         if (promotion) {
@@ -246,6 +240,8 @@ export const createOrder: RequestHandler = async (req, res) => {
 
 export const confirmOrder: RequestHandler = async (req, res) => {
 
+    const isAdmin = req.user!.role === "admin" || req.user!.role === "officer";
+
     const { orderId } = req.params;
     const { id: agentId } = req.user!;
 
@@ -258,7 +254,7 @@ export const confirmOrder: RequestHandler = async (req, res) => {
         throw new CustomError("Order not found", 404, true);
     }
 
-    if (order.agentId !== agentId) {
+    if (order.agentId !== agentId && !isAdmin) {
         throw new CustomError("Not your order", 403, true);
     }
 
@@ -321,7 +317,6 @@ export const deliverOrder: RequestHandler = async (req, res) => {
 
     const itemsSummary = order.items.map((item) => ({
         name: item.productName,
-        weightLabel: item.weightLabel,
         qty: item.quantity,
         subtotal: item.subtotal,
     }));
@@ -377,7 +372,7 @@ export const scanQR: RequestHandler = async (req, res) => {
 
     const { code } = req.body;
 
-    const qrCode = await prisma.qRCode.findUnique({ where: { code } });
+    const qrCode = await prisma.qRCode.findUnique({ where: { code, customerId } });
 
     if (!qrCode) throw new CustomError("QR code not found", 404, true);
 
@@ -478,7 +473,7 @@ export const updateOrder: RequestHandler = async (req, res) => {
     const order = await prisma.order.findUnique({
         where: { id },
         include: {
-            items: { include: { variant: true } },
+            items: { include: { product: true } },
             customer: { select: { walletBalance: true, totalSpend: true } },
         },
     });
@@ -559,8 +554,8 @@ export const updateOrder: RequestHandler = async (req, res) => {
             }
 
             for (const item of order.items) {
-                const newQty = (item.variant?.stockQty ?? 0) + item.quantity;
-                await tx.productVariant.update({ where: { id: item.variantId }, data: { stockQty: newQty, isOutOfStock: false } });
+                const newQty = (item.product?.stockQty ?? 0) + item.quantity;
+                await tx.product.update({ where: { id: item.productId }, data: { stockQty: newQty } });
             }
 
             return o;

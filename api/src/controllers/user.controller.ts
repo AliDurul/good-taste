@@ -55,11 +55,11 @@ export const createUser: RequestHandler = async (req, res) => {
     const { email, password, name, role, image, phone, address, city, country, birthday, assignedAgentId } = req.body;
 
     const isAdminCreating = req.user?.role === "admin";
+    const isAgentCreating = req.user?.role === "agent";
     const effectiveRole = isAdminCreating ? (role ?? "customer") : "customer";
 
     // If the creator is an agent, bind this customer to them regardless of body
-    const effectiveAgentId: string | undefined = req.user?.role === "agent" ? req.user.id : assignedAgentId;
-
+    const effectiveAgentId = isAgentCreating ? req.user?.id! : assignedAgentId;
 
     interface CreateUserResult {
         user?: { id: string };
@@ -85,6 +85,7 @@ export const createUser: RequestHandler = async (req, res) => {
         },
         headers: fromNodeHeaders(req.headers),
     }) as CreateUserResult;
+
 
     // // 3. Send invite email - use Magic Link plugin or Password Reset
     // // Option A: Magic Link (they click, auto-login, then prompt to set password)

@@ -13,7 +13,7 @@ export const userCreateSchema = z
         city: z.string().optional(),
         country: z.string().optional(),
         birthday: z.string().datetime().optional(),
-        assignedAgentId: z.string().uuid().optional(),
+        assignedAgentId: z.string().optional(), //! add uuid back
     })
     .strict();
 export type UserCreate = z.infer<typeof userCreateSchema>;

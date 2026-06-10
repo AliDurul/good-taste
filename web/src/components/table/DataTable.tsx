@@ -153,7 +153,7 @@ export default function DataTable<TData, TValue>({
             pagination
         },
         initialState: {
-            pagination: { pageSize: 20, },
+            pagination: { pageSize: 10, },
         },
     })
 

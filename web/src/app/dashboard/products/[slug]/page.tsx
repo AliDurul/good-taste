@@ -8,14 +8,6 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
-import {
-    Table,
-    TableBody,
-    TableCell,
-    TableHead,
-    TableHeader,
-    TableRow,
-} from '@/components/ui/table'
 import { Skeleton } from '@/components/ui/skeleton'
 import { getProduct } from '@/actions/queries'
 import { ProductActions } from './_components/ProductActions'
@@ -101,8 +93,37 @@ async function ProductDetail({ params }: IPageParams) {
                                 <p className="font-medium">{format(new Date(product.updatedAt), 'dd MMM yyyy')}</p>
                             </div>
                             <div>
-                                <p className="mb-0.5 text-muted-foreground">Variants</p>
-                                <p className="font-medium">{product.variants?.length ?? 0}</p>
+                                <p className="mb-0.5 text-muted-foreground">Weight</p>
+                                <p className="font-medium">{product.weightKg} kg</p>
+                            </div>
+                            <div>
+                                <p className="mb-0.5 text-muted-foreground">Price</p>
+                                <p className="font-medium">K{product.price.toFixed(2)}</p>
+                            </div>
+                            <div>
+                                <p className="mb-0.5 text-muted-foreground">Earn Value</p>
+                                <p className="font-medium">{product.earnValue}</p>
+                            </div>
+                            <div>
+                                <p className="mb-0.5 text-muted-foreground">Stock</p>
+                                <div className="flex items-center gap-2">
+                                    <p className="font-medium">{product.stockQty}</p>
+                                    {product.stockQty <= product.lowStockThreshold && (
+                                        <Badge variant="outline">Low</Badge>
+                                    )}
+                                </div>
+                            </div>
+                            <div>
+                                <p className="mb-0.5 text-muted-foreground">Low Stock Threshold</p>
+                                <p className="font-medium">{product.lowStockThreshold}</p>
+                            </div>
+                            <div>
+                                <p className="mb-0.5 text-muted-foreground">Last Restocked</p>
+                                <p className="font-medium">
+                                    {product.lastRestockedAt
+                                        ? format(new Date(product.lastRestockedAt), 'dd MMM yyyy')
+                                        : '—'}
+                                </p>
                             </div>
                         </div>
                         {product.description && (
@@ -133,73 +154,6 @@ async function ProductDetail({ params }: IPageParams) {
                         )}
                     </CardContent>
                 </Card>
-            </div>
-
-            {/* Variants */}
-            <div className="flex flex-col gap-3">
-                <div className="flex items-center gap-2">
-                    <h2 className="text-lg font-semibold">Variants</h2>
-                    <Badge variant="secondary">{product.variants?.length ?? 0}</Badge>
-                </div>
-
-                {product.variants && product.variants.length > 0 ? (
-                    <Card>
-                        <CardContent className="p-0">
-                            <Table>
-                                <TableHeader>
-                                    <TableRow>
-                                        <TableHead className="w-10">#</TableHead>
-                                        <TableHead>Weight</TableHead>
-                                        <TableHead>Price</TableHead>
-                                        <TableHead>Earn Value</TableHead>
-                                        <TableHead>Stock</TableHead>
-                                        <TableHead>Low Stock Threshold</TableHead>
-                                        <TableHead>Last Restocked</TableHead>
-                                        <TableHead>Status</TableHead>
-                                    </TableRow>
-                                </TableHeader>
-                                <TableBody>
-                                    {product.variants.map((variant, i) => (
-                                        <TableRow key={variant.id}>
-                                            <TableCell className="text-muted-foreground">{i + 1}</TableCell>
-                                            <TableCell className="font-medium">{variant.weightLabel}</TableCell>
-                                            <TableCell>${variant.price.toFixed(2)}</TableCell>
-                                            <TableCell>{variant.earnValue}</TableCell>
-                                            <TableCell>
-                                                <div className="flex items-center gap-2">
-                                                    <span>{variant.stockQty}</span>
-                                                    {variant.isOutOfStock && (
-                                                        <Badge variant="destructive">Out of stock</Badge>
-                                                    )}
-                                                    {!variant.isOutOfStock && variant.stockQty <= variant.lowStockThreshold && (
-                                                        <Badge variant="outline">Low</Badge>
-                                                    )}
-                                                </div>
-                                            </TableCell>
-                                            <TableCell>{variant.lowStockThreshold}</TableCell>
-                                            <TableCell>
-                                                {variant.lastRestockedAt
-                                                    ? format(new Date(variant.lastRestockedAt), 'dd MMM yyyy')
-                                                    : '—'}
-                                            </TableCell>
-                                            <TableCell>
-                                                <Badge variant={variant.isActive ? 'success' : 'destructive'}>
-                                                    {variant.isActive ? 'Active' : 'Inactive'}
-                                                </Badge>
-                                            </TableCell>
-                                        </TableRow>
-                                    ))}
-                                </TableBody>
-                            </Table>
-                        </CardContent>
-                    </Card>
-                ) : (
-                    <Card>
-                        <CardContent className="py-10 text-center text-sm text-muted-foreground">
-                            No variants added yet.
-                        </CardContent>
-                    </Card>
-                )}
             </div>
         </div>
     )

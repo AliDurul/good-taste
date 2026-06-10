@@ -1,8 +1,9 @@
 import { getCategories } from '@/actions/queries'
 import { DataSection } from '@/components/DataSection'
 import { ProductForm } from '../_components/ProductForm'
+import { IPageSearchParams } from '@/types'
 
-export default function NewProductPage() {
+export default function NewProductPage({ searchParams }: IPageSearchParams) {
 
   return (
     <div className="flex flex-col gap-8 p-4">
@@ -14,17 +15,24 @@ export default function NewProductPage() {
       </div>
       <div className="rounded-md border p-4">
         <DataSection label="product details">
-          <FormData />
+          <FormData searchParams={searchParams} />
         </DataSection>
       </div>
     </div>
   )
 }
 
-async function FormData() {
-  const result = await getCategories()
+async function FormData({ searchParams }: IPageSearchParams) {
+  const [result, params] = await Promise.all([getCategories(), searchParams])
+  const categoryId = params.categoryId
 
-  return <ProductForm mode="create" categories={result.data ?? []} />
+  return (
+    <ProductForm
+      mode="create"
+      categories={result.data ?? []}
+      defaultValues={categoryId ? { categoryId } : undefined}
+    />
+  )
 }
 
 

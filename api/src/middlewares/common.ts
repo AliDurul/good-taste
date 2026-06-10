@@ -63,7 +63,7 @@ export async function errorHandler(err: unknown, req: Request, res: Response, ne
 }
 
 // PAGINATION MIDDLEWARE
-export const parsePagination = (defaultLimit = 20): RequestHandler => (req, _res, next) => {
+export const parsePagination = (defaultLimit = 10): RequestHandler => (req, _res, next) => {
     const query = req.query as Record<string, string | undefined>;
     const page = Math.max(1, query.page ? parseInt(query.page) : 1);
     const limit = Math.max(1, query.limit ? parseInt(query.limit) : defaultLimit);

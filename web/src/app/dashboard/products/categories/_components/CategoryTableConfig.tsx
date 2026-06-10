@@ -9,10 +9,11 @@ import {
     DropdownMenuShortcut,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { MoreHorizontal, Plus } from 'lucide-react'
+import { MoreHorizontal, PackagePlus, Plus } from 'lucide-react'
 import { format } from 'date-fns'
 import { Button } from '@/components/ui/button'
 import { useState } from 'react'
+import Link from 'next/link'
 import { toast } from 'sonner'
 import { DataTableColumnHeader } from '@/components/table/data-table-column-header'
 import { DeleteDialog } from '@/components/DeleteDialog'
@@ -80,6 +81,12 @@ function RowActions({ category }: { category: IProductCategory }) {
                         }}
                     >
                         Edit
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                        <Link href={`/dashboard/products/new?categoryId=${category.id}`}>
+                            <PackagePlus />
+                            Add Product
+                        </Link>
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem
