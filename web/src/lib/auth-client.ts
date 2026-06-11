@@ -8,10 +8,21 @@ export const authClient = createAuthClient({
         adminClient(),
         inferAdditionalFields({
             user: {
-                role: { type: "string" as const },
-                banned: { type: "boolean" as const },
-                banReason: { type: "string" as const },
-                banExpires: { type: "date" as const }
+                phone: { type: "string" },
+                address: { type: "string" },
+                city: { type: "string" },
+                country: { type: "string" },
+                birthday: { type: "date" },
+                referralCode: { type: "string" },
+                walletBalance: { type: "number" },
+                totalSpend: { type: "number" },
+                assignedAgentId: { type: "string" },
+                referredById: { type: "string" },
+                tierId: { type: "string" },
+                role: { type: "string" },
+                banned: { type: "boolean" },
+                banReason: { type: "string" },
+                banExpires: { type: "date" }
             }
         })
     ]

@@ -2,6 +2,11 @@
 const nextConfig = {
   cacheComponents: true,
   reactCompiler: true,
+  rewrites: [{
+    "source": "/api/auth/:path*",
+    "destination": "https://good-taste.onrender.com/api/v1/auth/:path*"
+  }]
+  ,
   images: {
     remotePatterns: [
       {

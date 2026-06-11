@@ -68,13 +68,13 @@ export function LandingNavbar() {
             >
               <a href="#app">Download App</a>
             </Button>
-            <Button
+            {/* <Button
               asChild
               size="sm"
               className="bg-amber-600 hover:bg-amber-700 text-white"
             >
               <Link href="/login">Admin Login</Link>
-            </Button>
+            </Button> */}
           </div>
 
           {/* Mobile hamburger */}

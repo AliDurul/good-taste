@@ -100,23 +100,6 @@ export const auth = betterAuth({
             httpOnly: true,
         }
     },
-    // socialProviders: {
-    //     google: {
-    //         prompt: "select_account consent",
-    //         clientId: [
-    //             process.env.GOOGLE_WEB_CLIENT_ID as string,
-    //             process.env.GOOGLE_IOS_CLIENT_ID as string,
-    //             process.env.GOOGLE_ANDROID_CLIENT_ID as string,
-    //         ],
-    //         clientSecret: process.env.GOOGLE_CLIENT_SECRET as string,
-    //         accessType: "offline",
-    //     },
-    //     facebook: {
-    //         clientId: process.env.FACEBOOK_CLIENT_ID!,
-    //         clientSecret: process.env.FACEBOOK_CLIENT_SECRET!,
-    //         scopes: ["email", "public_profile"],
-    //     },
-    // },
     session: {
         expiresIn: 60 * 60 * 24 * 7,
         updateAge: 60 * 60 * 24,
