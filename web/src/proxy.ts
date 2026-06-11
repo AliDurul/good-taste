@@ -42,6 +42,6 @@ export const config = {
     matcher: [
         // Exclude /api/uploadthing: UploadThing's CDN makes server-to-server webhook
         // callbacks to this route without user cookies, so it must bypass the auth guard.
-        "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$)(?!api/auth)(?!api/uploadthing).*)",
+        "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$)(?!api/v1/auth)(?!api/uploadthing).*)",
     ],
 };
