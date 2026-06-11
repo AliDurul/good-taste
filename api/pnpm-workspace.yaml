@@ -1,5 +1,5 @@
-ignoredBuiltDependencies:
-  - '@prisma/engines'
-  - esbuild
-  - prisma
-  - rolldown
+allowBuilds:
+  '@prisma/engines': true
+  esbuild: true
+  prisma: true
+  rolldown: true
