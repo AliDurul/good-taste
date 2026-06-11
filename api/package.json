@@ -6,7 +6,8 @@
   "scripts": {
     "start": "node dist/index.cjs",
     "dev": "tsx watch src/index.ts",
-    "build": "prisma generate && tsdown",
+    "dev:build": "prisma generate && tsdown",
+    "build": "npx prisma generate && npx prisma migrate deploy && tsdown",
     "check-types": "tsc --noEmit",
     "lint": "eslint src/ --max-warnings 0",
     "db:generate": "pnpm dlx prisma generate",
@@ -27,6 +28,7 @@
     "express-rate-limit": "^8.5.0",
     "helmet": "^7.2.0",
     "pg": "^8.20.0",
+    "prisma": "^7.8.0",
     "zod": "^3.25.76"
   },
   "devDependencies": {
@@ -43,7 +45,6 @@
     "morgan": "^1.10.1",
     "multer": "^2.1.1",
     "nodemon": "^3.1.14",
-    "prisma": "^7.8.0",
     "supertest": "^7.1.0",
     "ts-node": "^10.9.2",
     "tsdown": "0.9.3",
