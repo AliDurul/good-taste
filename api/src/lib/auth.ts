@@ -94,7 +94,7 @@ export const auth = betterAuth({
         cookiePrefix: "goodtaste",
         useSecureCookies: true,
         defaultCookieAttributes: {
-            sameSite: "lax",
+            sameSite: "none",
             secure: true,
             path: "/",
             httpOnly: true,
@@ -106,7 +106,6 @@ export const auth = betterAuth({
         cookieCache: { enabled: true, maxAge: 10 * 60 }
     },
     trustedOrigins: [
-        process.env.WEB_FRONTEND_URL!,
         "http://10.0.2.2:8000", // For Android emulator accessing backend
 
         ...(process.env.NODE_ENV === "development" ? [
@@ -114,7 +113,7 @@ export const auth = betterAuth({
             "exp://192.168.*.*:*/**", // Local network
         ] : [
             "myapp://*",
-            "https://your-web-domain.com", // If web version exists
+            "https://goodtastemilling.com", // If web version exists
         ])
     ],
     secret: process.env.BETTER_AUTH_SECRET!,
