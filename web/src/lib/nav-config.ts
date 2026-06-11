@@ -8,6 +8,7 @@ const navConfig = [
     isActive: true,
     roles: ["admin", "officer", "agent"],   // everyone
     items: [
+      { title: "Overview", url: "/dashboard", roles: ["admin", "officer"] },
       { title: "Sale Reports", url: "/dashboard/sale-reports", roles: ["admin", "officer", "agent"] },
       { title: "Order Reports", url: "/dashboard/order-reports", roles: ["admin", "officer"] },
       // { title: "Settings", url: "/settings", roles: ["admin"] },

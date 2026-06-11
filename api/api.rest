@@ -37,8 +37,8 @@ POST {{baseurl}}/auth/sign-in/email
 Content-Type: application/json
 
 {
-  "email": "alidrl@gmail.com",
-  "password": "Goodtaste2021.,?"
+  "email": "bahamihoglu@gmail.com",
+  "password": "Admin1234"
 }
 
 ### 
@@ -48,7 +48,7 @@ POST {{baseurl}}/auth/sign-in/email
 Content-Type: application/json
 
 {
-  "email": "agentTest2@test.com",
+  "email": "thomassanyati@gmail.com",
   "password": "Pass1234"
 }
 
@@ -108,7 +108,7 @@ Authorization: Bearer {{token}}
 
 
 # @name userlist
-GET {{baseurl}}/users?
+GET {{baseurl}}/users
 Authorization: Bearer {{adminToken}}
 
 ###
@@ -282,7 +282,7 @@ Content-Type: application/json
 
 # @name orderList
 GET {{baseurl}}/orders
-Authorization: Bearer {{customerToken}}
+Authorization: Bearer {{adminToken}}
 
 ###
 

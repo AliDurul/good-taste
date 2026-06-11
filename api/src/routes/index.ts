@@ -9,6 +9,7 @@ import orderRoutes from "./order.route";
 import loyaltyTierRoutes from "./loyalty-tier.route";
 import walletConfigRoutes from "./wallet-config.route";
 import walletTransactionRoutes from "./wallet-transaction.route";
+import analyticsRoutes from "./analytics.route";
 
 const router: Router = Router();
 
@@ -40,6 +41,9 @@ router.use('/users', authenticate, userRoutes); // ?
 
 // orders
 router.use('/orders', authenticate, orderRoutes); // ?
+
+// analytics
+router.use('/analytics', authenticate, analyticsRoutes);
 
 
 // router.post('/upload', upload.single('image'), (req, res) => {

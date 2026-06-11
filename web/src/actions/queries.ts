@@ -1,6 +1,6 @@
 'use server'
 import { cacheLife, cacheTag } from 'next/cache'
-import type { ActionResult, IOrder, IProduct, IWalletConfig, ILoyaltyTier, PaginatedResponse, IProductCategory, IUser } from '@/types'
+import type { ActionResult, IDashboardStats, IOrder, IOrdersReport, IProduct, ISalesReport, IWalletConfig, ILoyaltyTier, PaginatedResponse, IProductCategory, IUser } from '@/types'
 import { apiFetch, getSessionToken, type FetchParams } from './apiFetch'
 
 async function fetchProducts(token: string | undefined, params?: FetchParams) {
@@ -141,4 +141,21 @@ export async function getUser(id: string): Promise<ActionResult<IUser>> {
   } catch {
     return { success: false, message: 'User not found', status: 404 }
   }
+}
+
+// Analytics — orders also come from the mobile app, outside this app's
+// updateTag() reach — so no 'use cache': always fetch fresh.
+export async function getDashboardStats() {
+  const token = await getSessionToken()
+  return apiFetch<{ success: true; data: IDashboardStats }>('/analytics/dashboard', token)
+}
+
+export async function getSalesReport(params?: FetchParams) {
+  const token = await getSessionToken()
+  return apiFetch<{ success: true; data: ISalesReport }>('/analytics/sales', token, { params })
+}
+
+export async function getOrdersReport(params?: FetchParams) {
+  const token = await getSessionToken()
+  return apiFetch<{ success: true; data: IOrdersReport }>('/analytics/orders', token, { params })
 }
