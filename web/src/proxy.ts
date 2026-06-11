@@ -14,7 +14,6 @@ export async function proxy(request: NextRequest) {
         cookiePrefix: "goodtaste"
     });
 
-    // console.log("Session cookie:", sessionCookie);
 
     // 2. Auth Guard: Redirect logged-in users away from /login
     if (sessionCookie && isAuthRoute) {
@@ -31,11 +30,7 @@ export async function proxy(request: NextRequest) {
 
         const loginUrl = new URL("/login", request.url);
 
-        // Only show "session_expired" if cookie exists but session is null
-        // (user WAS logged in but session was invalidated)
-        // if (sessionCookie && sessionCookie.value) {
-        //     loginUrl.searchParams.set("error", "session_expired");
-        // }
+
         return NextResponse.redirect(loginUrl);
 
     }
