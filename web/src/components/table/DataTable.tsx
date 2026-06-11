@@ -56,6 +56,7 @@ import { ChevronsLeft, ChevronsRight, Settings2, X } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import SearchInput from "../SearchInput"
+import { useIsMobile } from "@/hooks/use-mobile"
 
 
 interface DataTableProps<TData, TValue> {
@@ -64,6 +65,7 @@ interface DataTableProps<TData, TValue> {
     initialColumnVisibility?: VisibilityState
     filterPlaceholder?: string
     renderToolbarActions?: (table: TanstackTable<TData>) => React.ReactNode
+    renderMobileRow?: (row: TData) => React.ReactNode
     apiPagination?: ApiPagination
     onApiPageChange?: (page: number) => void
     onApiPageSizeChange?: (limit: number) => void
@@ -84,9 +86,12 @@ export default function DataTable<TData, TValue>({
     initialColumnVisibility,
     filterPlaceholder,
     renderToolbarActions,
+    renderMobileRow,
     apiPagination,
     onApiPageChange,
     onApiPageSizeChange }: DataTableProps<TData, TValue>) {
+    const isMobile = useIsMobile()
+    const isMobileCardView = isMobile && !!renderMobileRow
     const [sorting, setSorting] = useState<SortingState>([])
     const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
     const [columnVisibility, setColumnVisibility] = useState<VisibilityState>(initialColumnVisibility ?? {})
@@ -220,88 +225,104 @@ export default function DataTable<TData, TValue>({
                 </div>
                 {/* Right section: view and actions */}
                 <div className="flex flex-col gap-2 w-full sm:w-auto sm:flex-row sm:items-center sm:gap-3">
-                    <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                className="w-full sm:w-auto h-8"
-                            >
-                                <Settings2 />
-                                <span className="ml-1">View</span>
-                            </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="w-37.5">
-                            <DropdownMenuLabel>Toggle columns</DropdownMenuLabel>
-                            <DropdownMenuSeparator />
-                            {table
-                                .getAllColumns()
-                                .filter(
-                                    (column) =>
-                                        typeof column.accessorFn !== "undefined" && column.getCanHide()
-                                )
-                                .map((column) => {
-                                    return (
-                                        <DropdownMenuCheckboxItem
-                                            key={column.id}
-                                            className="capitalize"
-                                            checked={column.getIsVisible()}
-                                            onCheckedChange={(value) => column.toggleVisibility(!!value)}
-                                        >
-                                            {column.id}
-                                        </DropdownMenuCheckboxItem>
+                    {!isMobileCardView && (
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    className="w-full sm:w-auto h-8"
+                                >
+                                    <Settings2 />
+                                    <span className="ml-1">View</span>
+                                </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="w-37.5">
+                                <DropdownMenuLabel>Toggle columns</DropdownMenuLabel>
+                                <DropdownMenuSeparator />
+                                {table
+                                    .getAllColumns()
+                                    .filter(
+                                        (column) =>
+                                            typeof column.accessorFn !== "undefined" && column.getCanHide()
                                     )
-                                })}
-                        </DropdownMenuContent>
-                    </DropdownMenu>
+                                    .map((column) => {
+                                        return (
+                                            <DropdownMenuCheckboxItem
+                                                key={column.id}
+                                                className="capitalize"
+                                                checked={column.getIsVisible()}
+                                                onCheckedChange={(value) => column.toggleVisibility(!!value)}
+                                            >
+                                                {column.id}
+                                            </DropdownMenuCheckboxItem>
+                                        )
+                                    })}
+                            </DropdownMenuContent>
+                        </DropdownMenu>
+                    )}
                     <div className="w-full sm:w-auto">{renderToolbarActions?.(table)}</div>
                 </div>
             </div>
             {/* table */}
-            <div className="overflow-hidden rounded-md border">
-                <Table>
-                    <TableHeader className="bg-muted">
-                        {table.getHeaderGroups().map((headerGroup) => (
-                            <TableRow key={headerGroup.id}>
-                                {headerGroup.headers.map((header) => {
-                                    return (
-                                        <TableHead key={header.id}>
-                                            {header.isPlaceholder
-                                                ? null
-                                                : flexRender(
-                                                    header.column.columnDef.header,
-                                                    header.getContext()
-                                                )}
-                                        </TableHead>
-                                    )
-                                })}
-                            </TableRow>
+            {isMobileCardView ? (
+                table.getRowModel().rows?.length ? (
+                    <div className="flex flex-col gap-3">
+                        {table.getRowModel().rows.map((row) => (
+                            <div key={row.id}>{renderMobileRow(row.original)}</div>
                         ))}
-                    </TableHeader>
-                    <TableBody>
-                        {table.getRowModel().rows?.length ? (
-                            table.getRowModel().rows.map((row) => (
-                                <TableRow
-                                    key={row.id}
-                                    data-state={row.getIsSelected() && "selected"}
-                                >
-                                    {row.getVisibleCells().map((cell) => (
-                                        <TableCell key={cell.id}>
-                                            {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                                        </TableCell>
-                                    ))}
+                    </div>
+                ) : (
+                    <div className="rounded-md border h-24 flex items-center justify-center text-center text-muted-foreground">
+                        No results.
+                    </div>
+                )
+            ) : (
+                <div className="overflow-hidden rounded-md border">
+                    <Table>
+                        <TableHeader className="bg-muted">
+                            {table.getHeaderGroups().map((headerGroup) => (
+                                <TableRow key={headerGroup.id}>
+                                    {headerGroup.headers.map((header) => {
+                                        return (
+                                            <TableHead key={header.id}>
+                                                {header.isPlaceholder
+                                                    ? null
+                                                    : flexRender(
+                                                        header.column.columnDef.header,
+                                                        header.getContext()
+                                                    )}
+                                            </TableHead>
+                                        )
+                                    })}
                                 </TableRow>
-                            ))
-                        ) : (
-                            <TableRow>
-                                <TableCell colSpan={columns.length} className="h-24 text-center">
-                                    No results.
-                                </TableCell>
-                            </TableRow>
-                        )}
-                    </TableBody>
-                </Table>
-            </div>
+                            ))}
+                        </TableHeader>
+                        <TableBody>
+                            {table.getRowModel().rows?.length ? (
+                                table.getRowModel().rows.map((row) => (
+                                    <TableRow
+                                        key={row.id}
+                                        data-state={row.getIsSelected() && "selected"}
+                                    >
+                                        {row.getVisibleCells().map((cell) => (
+                                            <TableCell key={cell.id}>
+                                                {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                                            </TableCell>
+                                        ))}
+                                    </TableRow>
+                                ))
+                            ) : (
+                                <TableRow>
+                                    <TableCell colSpan={columns.length} className="h-24 text-center">
+                                        No results.
+                                    </TableCell>
+                                </TableRow>
+                            )}
+                        </TableBody>
+                    </Table>
+                </div>
+            )}
             {/* Pagination */}
             <div className="mt-4 flex flex-col-reverse items-center justify-between gap-3 md:flex-row">
                 {

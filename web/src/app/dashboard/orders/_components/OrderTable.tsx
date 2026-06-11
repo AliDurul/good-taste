@@ -4,11 +4,12 @@ import { useUrlParams } from '@/hooks/useUrlParams'
 import { cn } from '@/lib/utils'
 import  { useTransition } from 'react'
 import { Columns, toolbarAction } from './OrderTableConfig'
+import { OrderCard } from './OrderCard'
 import { IOrder, PaginatedResponse } from '@/types'
 
 
 export default function OrderTable({ result }: { result: PaginatedResponse<IOrder> }) {
-    const { updateUrlParams, getParam } = useUrlParams()
+    const { updateUrlParams } = useUrlParams()
     const [isPending, startTransition] = useTransition()
 
     return (
@@ -18,6 +19,7 @@ export default function OrderTable({ result }: { result: PaginatedResponse<IOrde
                 data={result?.data || []}
                 filterPlaceholder="Search orders..."
                 renderToolbarActions={toolbarAction}
+                renderMobileRow={(order) => <OrderCard order={order} />}
                 apiPagination={result?.pagination}
                 onApiPageChange={(page) =>
                     startTransition(() => {

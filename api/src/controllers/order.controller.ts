@@ -20,6 +20,10 @@ export const listOrders: RequestHandler = async (req, res) => {
     } else {
         if (query.customerId) where.customerId = query.customerId;
         if (query.agentId) where.agentId = query.agentId;
+        if (query.search) where.OR = [
+            { customer: { name: { contains: query.search, mode: "insensitive" } } },
+            { agent: { name: { contains: query.search, mode: "insensitive" } } },
+        ];
     }
 
     if (query.status) where.status = query.status as OrderStatus;
@@ -55,11 +59,11 @@ export const listOrders: RequestHandler = async (req, res) => {
 export const getOrder: RequestHandler = async (req, res) => {
 
     const { id } = req.params;
-    
+
     const order = await prisma.order.findUnique({ where: { id }, include: { items: true, qrCode: true, customer: { select: { name: true } }, agent: { select: { name: true } } } });
-    
+
     if (!order) throw new CustomError("Order not found", 404, true);
-    
+
     res.status(200).send({ success: true, data: order });
 };
 

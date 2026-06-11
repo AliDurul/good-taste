@@ -325,7 +325,7 @@ const workers = [
     {
         "name": "Thomas Sanyati",
         "email": "thomassanyati@gmail.com",
-        "password": "Admin1234",
+        "password": "Agent1234",
         "role": "agent",
         "phone": "1234567890",
         "birthday": "1990-01-01"

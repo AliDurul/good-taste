@@ -14,6 +14,16 @@ const navConfig = [
     ],
   },
   {
+    title: "Orders",
+    icon: ShoppingCart,
+    isActive: true,
+    roles: ["admin", "officer", "agent"],
+    items: [
+      { title: "Order List", url: "/dashboard/orders", roles: ["admin", "officer", "agent"] },
+      { title: "Create Order", url: "/dashboard/orders/new", roles: ["admin", "officer"] },
+    ],
+  },
+  {
     title: "Stocks",
     icon: Boxes,
     roles: ["admin", "officer"],
@@ -22,15 +32,7 @@ const navConfig = [
       { title: "Product Categories", url: "/dashboard/products/categories", roles: ["admin"] },
     ],
   },
-  {
-    title: "Orders",
-    icon: ShoppingCart,
-    roles: ["admin", "officer", "agent"],
-    items: [
-      { title: "Order List", url: "/dashboard/orders", roles: ["admin", "officer", "agent"] },
-      { title: "Create Order", url: "/dashboard/orders/new", roles: ["admin", "officer"] },
-    ],
-  },
+
   {
     title: "Users",
     icon: Users,
